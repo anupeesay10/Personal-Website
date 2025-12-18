@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-bg: #0a0e27;
+            --secondary-bg: #111630;
+            --tertiary-bg: #1a1f3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b5c4;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --border-color: #2a2f4d;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1920px;
+            margin: 0 auto;
+            background-color: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .controls-section {
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: var(--tertiary-bg);
+        }
+
+        .control-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-size: 0.95em;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        select {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1em;
+            font-family: inherit;
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+
+        input[type="text"]::placeholder,
+        input[type="date"]::placeholder {
+            color: var(--text-secondary);
+        }
+
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+            background-color: rgba(99, 102, 241, 0.05);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        button:hover {
+            background-color: var(--accent-light);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background-color: var(--border-color);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .message.success {
+            background-color: rgba(99, 102, 241, 0.2);
+            color: var(--accent-light);
+            border: 1px solid var(--accent);
+            display: block;
+        }
+
+        .message.error {
+            background-color: rgba(220, 38, 38, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(220, 38, 38, 0.5);
+            display: block;
+        }
+
+        .statistics-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.1em;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .charts-container {
+            margin-top: 30px;
+        }
+
+        .chart {
+            margin-bottom: 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            background-color: var(--tertiary-bg);
+        }
+
+        .placeholder-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 768px) {
+            .control-group {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Stock Dashboard</h1>
+
+        <div class="controls-section">
+            <div class="control-group">
+                <div class="input-group">
+                    <label for="ticker-input">Enter Stock Ticker:</label>
+                    <input type="text" id="ticker-input" value="TSLA" placeholder="e.g., TSLA">
+                </div>
+
+                <div class="input-group">
+                    <label for="start-date-input">Start Date:</label>
+                    <input type="date" id="start-date-input" value="2010-06-29">
+                </div>
+
+                <div class="input-group">
+                    <label for="end-date-input">End Date:</label>
+                    <input type="date" id="end-date-input">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button id="load-button">Load Stock Data</button>
+                <button id="clear-button">Clear</button>
+            </div>
+
+            <div id="message" class="message"></div>
+        </div>
+
+        <div class="statistics-controls" id="statistics-controls" style="display: none;">
+            <div class="input-group">
+                <label for="stat-select">Select Statistics:</label>
+                <select id="stat-select">
+                    <option value="Yearly Statistics">Yearly Statistics</option>
+                    <option value="All Years Statistics">All Years Statistics</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="year-select">Select Year:</label>
+                <select id="year-select">
+                    <option>Loading...</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="charts-container" class="charts-container">
+            <div class="placeholder-message">
+                Please load stock data by entering a ticker symbol, selecting a date range, and clicking 'Load Stock Data'.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5001/api';
+        let currentData = null;
+        let availableYears = [];
+
+        const tickerInput = document.getElementById('ticker-input');
+        const startDateInput = document.getElementById('start-date-input');
+        const endDateInput = document.getElementById('end-date-input');
+        const loadButton = document.getElementById('load-button');
+        const clearButton = document.getElementById('clear-button');
+        const messageDiv = document.getElementById('message');
+        const chartsContainer = document.getElementById('charts-container');
+        const statisticsControls = document.getElementById('statistics-controls');
+        const statSelect = document.getElementById('stat-select');
+        const yearSelect = document.getElementById('year-select');
+
+        // Set end date to today
+        const today = new Date().toISOString().split('T')[0];
+        endDateInput.value = today;
+
+        loadButton.addEventListener('click', loadStockData);
+        clearButton.addEventListener('click', clearData);
+        statSelect.addEventListener('change', updateCharts);
+        yearSelect.addEventListener('change', updateCharts);
+
+        async function checkApiHealth() {
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                return response.ok;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        async function loadStockData() {
+            const ticker = tickerInput.value.trim();
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+
+            if (!ticker) {
+                showMessage('Please enter a valid ticker symbol', 'error');
+                return;
+            }
+
+            if (!startDate || !endDate) {
+                showMessage('Please select both start and end dates', 'error');
+                return;
+            }
+
+            loadButton.disabled = true;
+
+            // Check if API is running
+            const apiHealthy = await checkApiHealth();
+            if (!apiHealthy) {
+                showMessage('API server is not running. Please run: python launcher.py (in the project directory)', 'error');
+                loadButton.disabled = false;
+                return;
+            }
+
+            showMessage(`<span class="spinner"></span>Loading data for ${ticker}...`, 'success');
+
+            try {
+                const response = await fetch(`${API_URL}/stock/load`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ticker: ticker.toUpperCase(),
+                        start_date: startDate,
+                        end_date: endDate
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    showMessage(result.message || 'Failed to load data', 'error');
+                    loadButton.disabled = false;
+                    return;
+                }
+
+                currentData = result.data;
+                availableYears = result.available_years || [];
+
+                updateYearDropdown();
+                statisticsControls.style.display = 'grid';
+
+                const dataSource = result.source === 'database' ? 'database' : 'Yahoo Finance';
+                showMessage(`Data for ${ticker.toUpperCase()} loaded from ${dataSource}!`, 'success');
+
+                updateCharts();
+            } catch (error) {
+                showMessage(`Error: ${error.message}. Make sure the API server is running with: python launcher.py`, 'error');
+            } finally {
+                loadButton.disabled = false;
+            }
+        }
+
+        function updateYearDropdown() {
+            yearSelect.innerHTML = '';
+            availableYears.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            });
+            if (availableYears.length > 0) {
+                yearSelect.value = availableYears[availableYears.length - 1];
+            }
+        }
+
+        function updateCharts() {
+            if (!currentData) return;
+
+            const df = parseJsonData(currentData);
+            const statType = statSelect.value;
+            const ticker = tickerInput.value.toUpperCase();
+            const year = parseInt(yearSelect.value);
+
+            chartsContainer.innerHTML = '';
+
+            if (statType === 'All Years Statistics') {
+                renderAllYearsCharts(df, ticker);
+            } else if (statType === 'Yearly Statistics') {
+                renderYearlyCharts(df, ticker, year);
+            }
+        }
+
+        function parseJsonData(jsonString) {
+            const data = JSON.parse(jsonString);
+            return {
+                index: data.index,
+                columns: data.columns,
+                data: data.data.map(row => {
+                    const obj = {};
+                    data.columns.forEach((col, idx) => {
+                        obj[col] = row[idx];
+                    });
+                    obj.date = new Date(obj.date);
+                    return obj;
+                })
+            };
+        }
+
+        function renderAllYearsCharts(df, ticker) {
+            const startYear = Math.min(...df.data.map(d => d.date.getFullYear()));
+            const endYear = Math.max(...df.data.map(d => d.date.getFullYear()));
+
+            // Candlestick chart
+            const candleTrace = {
+                x: df.data.map(d => d.date),
+                open: df.data.map(d => d.Open),
+                high: df.data.map(d => d.High),
+                low: df.data.map(d => d.Low),
+                close: df.data.map(d => d['Adj Close']),
+                type: 'candlestick'
+            };
+
+            const candleLayout = {
+                title: `${ticker} Stock Candlestick Chart (${startYear}-${endYear})`,
+                yaxis: { title: 'Price' },
+                xaxis: { title: 'Date' },
+                height: 700
+            };
+
+            createChart('candlestick-chart', [candleTrace], candleLayout);
+
+            // Volume chart
+            const yearlyVolume = {};
+            df.data.forEach(d => {
+                const year = d.date.getFullYear();
+                if (!yearlyVolume[year]) yearlyVolume[year] = [];
+                yearlyVolume[year].push(d.Volume);
+            });
+
+            const volumeYears = Object.keys(yearlyVolume).sort();
+            const volumeValues = volumeYears.map(year => 
+                yearlyVolume[year].reduce((a, b) => a + b, 0) / yearlyVolume[year].length
+            );
+
+            const volumeTrace = {
+                x: volumeYears.map(Number),
+                y: volumeValues,
+                type: 'scatter',
+                fill: 'tozeroy',
+                mode: 'lines+markers',
+                line: { color: '#003366' }
+            };
+
+            const volumeLayout = {
+                title: `Average ${ticker} Trading Volume Per Year (${startYear}-${endYear})`,
+                yaxis: { title: 'Volume' },
+                xaxis: { title: 'Year' },
+                height: 700
+            };
+
+            createChart('volume-chart', [volumeTrace], volumeLayout);
+
+            // Daily return chart
+            const dailyReturns = [];
+            for (let i = 1; i < df.data.length; i++) {
+                dailyReturns.push({
+                    date: df.data[i].date,
+                    return: ((df.data[i]['Adj Close'] - df.data[i - 1]['Adj Close']) / df.data[i - 1]['Adj Close']) * 100
+                });
+            }
+
+            const yearlyReturns = {};
+            dailyReturns.forEach(d => {
+                const year = d.date.getFullYear();
+                if (!yearlyReturns[year]) yearlyReturns[year] = [];
+                yearlyReturns[year].push(d.return);
+            });
+
+            const returnYears = Object.keys(yearlyReturns).sort();
+            const returnValues = returnYears.map(year => 
+                yearlyReturns[year].reduce((a, b) => a + b, 0) / yearlyReturns[year].length
+            );
+
+            const returnColors = returnValues.map(v => v > 0 ? 'green' : 'red');
+
+            const returnTrace = {
+                x: returnYears.map(Number),
+                y: returnValues,
+                type: 'bar',
+                marker: { color: returnColors }
+            };
+
+            const returnLayout = {
+                title: `Average Daily Returns Per Year for ${ticker}`,
+                yaxis: { title: 'Percent Daily Return (%)' },
+                xaxis: { title: 'Year' },
+                height: 700,
+                showlegend: false
+            };
+
+            createChart('return-chart', [returnTrace], returnLayout);
+
+            // Drawdown chart
+            const drawdownData = [];
+            let cumulativeMax = -Infinity;
+
+            df.data.forEach(d => {
+                const price = d['Adj Close'];
+                cumulativeMax = Math.max(cumulativeMax, price);
+                const drawdown = ((price / cumulativeMax) - 1) * 100;
+                drawdownData.push({
+                    date: d.date,
+                    drawdown: drawdown
+                });
+            });
+
+            const drawdownTrace = {
+                x: drawdownData.map(d => d.date),
+                y: drawdownData.map(d => d.drawdown),
+                type: 'scatter',
+                fill: 'tozeroy',
+                mode: 'lines',
+                line: { color: '#ff6666' }
+            };
+
+            const drawdownLayout = {
+                title: `${ticker} Drawdowns Over All Years`,
+                yaxis: { title: 'Percent Drawdown (%)' },
+                xaxis: { title: 'Date' },
+                height: 700
+            };
+
+            createChart('drawdown-chart', [drawdownTrace], drawdownLayout);
+        }
+
+        function renderYearlyCharts(df, ticker, year) {
+            const yearData = df.data.filter(d => d.date.getFullYear() === year);
+
+            if (yearData.length === 0) {
+                chartsContainer.innerHTML = `<div class="placeholder-message">No data available for ${ticker} in ${year}.</div>`;
+                return;
+            }
+
+            // Candlestick chart
+            const candleTrace = {
+                x: yearData.map(d => d.date),
+                open: yearData.map(d => d.Open),
+                high: yearData.map(d => d.High),
+                low: yearData.map(d => d.Low),
+                close: yearData.map(d => d['Adj Close']),
+                type: 'candlestick'
+            };
+
+            const candleLayout = {
+                title: `${ticker} Stock Candlestick Chart for ${year}`,
+                yaxis: { title: 'Price' },
+                xaxis: { title: 'Date' },
+                height: 700
+            };
+
+            createChart('candlestick-chart', [candleTrace], candleLayout);
+
+            // Volume chart
+            const volumeTrace = {
+                x: yearData.map(d => d.date),
+                y: yearData.map(d => d.Volume),
+                type: 'scatter',
+                fill: 'tozeroy',
+                mode: 'lines',
+                line: { color: '#003366' }
+            };
+
+            const volumeLayout = {
+                title: `${ticker} Daily Trading Volume for ${year}`,
+                yaxis: { title: 'Volume' },
+                xaxis: { title: 'Date' },
+                height: 700
+            };
+
+            createChart('volume-chart', [volumeTrace], volumeLayout);
+
+            // Daily return chart
+            const dailyReturns = [];
+            for (let i = 1; i < yearData.length; i++) {
+                const returnValue = ((yearData[i]['Adj Close'] - yearData[i - 1]['Adj Close']) / yearData[i - 1]['Adj Close']) * 100;
+                dailyReturns.push({
+                    date: yearData[i].date,
+                    return: returnValue,
+                    color: returnValue > 0 ? 'green' : 'red'
+                });
+            }
+
+            const returnTrace = {
+                x: dailyReturns.map(d => d.date),
+                y: dailyReturns.map(d => d.return),
+                type: 'bar',
+                marker: { color: dailyReturns.map(d => d.color) }
+            };
+
+            const returnLayout = {
+                title: `${ticker} Daily Returns for ${year}`,
+                yaxis: { title: 'Percent Daily Return (%)' },
+                xaxis: { title: 'Date' },
+                height: 700,
+                showlegend: false
+            };
+
+            createChart('return-chart', [returnTrace], returnLayout);
+
+            // Drawdown chart
+            const drawdownData = [];
+            let cumulativeMax = -Infinity;
+
+            yearData.forEach(d => {
+                const price = d['Adj Close'];
+                cumulativeMax = Math.max(cumulativeMax, price);
+                const drawdown = ((price / cumulativeMax) - 1) * 100;
+                drawdownData.push({
+                    date: d.date,
+                    drawdown: drawdown
+                });
+            });
+
+            const drawdownTrace = {
+                x: drawdownData.map(d => d.date),
+                y: drawdownData.map(d => d.drawdown),
+                type: 'scatter',
+                fill: 'tozeroy',
+                mode: 'lines',
+                line: { color: '#ff6666' }
+            };
+
+            const drawdownLayout = {
+                title: `${ticker} Drawdowns for ${year}`,
+                yaxis: { title: 'Percent Drawdown (%)' },
+                xaxis: { title: 'Date' },
+                height: 700
+            };
+
+            createChart('drawdown-chart', [drawdownTrace], drawdownLayout);
+        }
+
+        function createChart(containerId, traces, layout) {
+            let container = document.getElementById(containerId);
+            
+            if (!container) {
+                container = document.createElement('div');
+                container.id = containerId;
+                container.className = 'chart';
+                chartsContainer.appendChild(container);
+            }
+
+            const config = {
+                responsive: true,
+                displayModeBar: true,
+                displaylogo: false
+            };
+
+            Plotly.newPlot(container, traces, layout, config);
+        }
+
+        function clearData() {
+            currentData = null;
+            availableYears = [];
+            tickerInput.value = 'TSLA';
+            startDateInput.value = '2010-06-29';
+            endDateInput.value = today;
+            messageDiv.textContent = '';
+            messageDiv.className = 'message';
+            chartsContainer.innerHTML = '<div class="placeholder-message">Please load stock data by entering a ticker symbol, selecting a date range, and clicking \'Load Stock Data\'.</div>';
+            statisticsControls.style.display = 'none';
+            statSelect.value = 'Yearly Statistics';
+        }
+
+        function showMessage(text, type) {
+            messageDiv.innerHTML = text;
+            messageDiv.className = `message ${type}`;
+        }
+
+        // Load initial data if TSLA is available
+        window.addEventListener('load', () => {
+            // Optional: automatically load default ticker
+            // loadStockData();
+        });
+    </script>
+</body>
+</html>
