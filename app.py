@@ -24,6 +24,7 @@ API_URL = os.environ.get("API_URL", "https://stock-api-bj3r.onrender.com/api")
 
 # Dash app
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
+server = app.server  # <-- Add this line for Gunicorn / Render
 
 # Dropdown options for statistics view
 dropdown_options = [
@@ -38,50 +39,40 @@ year_list = [i for i in range(2010, current_year + 1)]
 # --- Layout ---
 app.layout = html.Div([
     html.H1("Stock Dashboard", style={'textAlign': 'center', 'color': '#003366'}),
-
     html.Div([
         html.Div([
             html.Label("Enter Stock Ticker:"),
             dcc.Input(id='ticker-input', type='text', value=DEFAULT_TICKER,
                       style={'width': '100%', 'padding': '8px', 'margin-bottom': '10px'}),
         ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
-
         html.Div([
             html.Label("Start Date:"),
             dcc.DatePickerSingle(id='start-date-picker', date=DEFAULT_START_DATE,
                                  display_format='YYYY-MM-DD', style={'width': '100%'})
         ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
-
         html.Div([
             html.Label("End Date:"),
             dcc.DatePickerSingle(id='end-date-picker', date=DEFAULT_END_DATE,
                                  display_format='YYYY-MM-DD', style={'width': '100%'})
         ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
-
         html.Button('Load Stock Data', id='submit-button', n_clicks=0,
                     style={'width': '100%', 'padding': '10px', 'margin-top': '20px',
                            'background-color': '#003366', 'color': 'white'}),
     ], style={'margin-bottom': '20px', 'border': '1px solid #ddd', 'padding': '10px', 'border-radius': '5px'}),
-
     html.Div(id='data-loaded-message', style={'margin': '10px 0', 'color': 'green'}),
-
     html.Div([
         html.Label("Select Statistics:"),
         dcc.Dropdown(id='stat-select', options=dropdown_options, value='Yearly Statistics')
     ]),
-
     html.Div([
         html.Label("Select Year:"),
         dcc.Dropdown(id='select-year', options=[{'label': i, 'value': i} for i in year_list],
                      value=year_list[-1])
     ]),
-
     html.Div(id='output-container', className='chart-grid', style={'padding': '20px'}),
-
     # Store loaded data
     dcc.Store(id='stock-data-store'),
     dcc.Store(id='years-available'),
-
     html.Div(id='initialization-div', style={'display': 'none'})
 ])
 
