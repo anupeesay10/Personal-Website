@@ -4,7 +4,6 @@ import plotly.express as px
 from datetime import date
 import requests
 import os
-from io import StringIO
 
 import dash
 from dash import dcc, html
@@ -147,8 +146,7 @@ def update_output(json_data, stat_type, year, ticker):
     if json_data is None:
         return html.Div("Please load stock data first.")
 
-    # Read JSON safely
-    df2 = pd.read_json(StringIO(json_data), orient='split')
+    df2 = pd.read_json(json_data, orient='split')
     df2['date'] = pd.to_datetime(df2['date'])
 
     # Use Close if Adj Close is missing
@@ -221,10 +219,9 @@ def update_output(json_data, stat_type, year, ticker):
         fig2.update_layout(xaxis_title='Date')
 
         year_data['daily_return'] = year_data[price_col].pct_change() * 100
-        yearly_return = year_data.groupby('date')['daily_return'].mean().reset_index()
-        yearly_return['return_category'] = yearly_return['daily_return'].apply(
+        year_data['return_category'] = year_data['daily_return'].apply(
             lambda x: 'Positive' if x > 0 else 'Negative')
-        fig3 = px.bar(yearly_return, x='date', y='daily_return', color='return_category',
+        fig3 = px.bar(year_data, x='date', y='daily_return', color='return_category',
                       color_discrete_map={'Positive': 'green', 'Negative': 'red'})
         fig3.update_layout(title=f"{stock_name} Average Daily Returns for {year}",
                            yaxis_title='Percent Daily Return (%)', xaxis_title='Date',
