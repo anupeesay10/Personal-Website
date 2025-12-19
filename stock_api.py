@@ -25,7 +25,7 @@ def index():
         'message': 'Stock API is live!'
     })
 
-# Health check
+# Health check route
 @app.route("/api/health", methods=['GET'])
 def health_check():
     try:
@@ -33,6 +33,7 @@ def health_check():
         return jsonify({'success': True, 'message': 'API is healthy'}), 200
     except Exception as e:
         return jsonify({'success': False, 'message': f'API health check failed: {str(e)}'}), 500
+
 
 # Load stock data
 @app.route('/api/stock/load', methods=['POST'])
