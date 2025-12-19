@@ -9,13 +9,19 @@ import subprocess
 import sys
 import time
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Display all rows and columns
 pd.set_option("display.max_rows", None)
 pd.set_option("display.max_columns", None)
 
 # Database connection
-engine = create_engine('postgresql://postgres:anirudh9@localhost:5432/postgres')
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set")
+engine = create_engine(DATABASE_URL)
 
 # Create Flask app
 app = Flask(__name__)
