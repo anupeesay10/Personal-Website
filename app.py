@@ -23,7 +23,7 @@ API_URL = os.environ.get("API_URL", "https://stock-api-bj3r.onrender.com/api")
 
 # Dash app
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
-server = app.server  # Needed for Render / Gunicorn
+server = app.server  # <-- required for Render/Gunicorn
 
 # Dropdown options for statistics view
 dropdown_options = [
@@ -86,18 +86,6 @@ app.layout = html.Div([
 ])
 
 
-# --- Helper function ---
-def check_ticker_data(ticker):
-    """Check if the default ticker has data available from API."""
-    try:
-        response = requests.get(f"{API_URL}/stock/data/{ticker}")
-        if response.status_code == 200 and response.json().get('success', False):
-            return response.json()
-        return None
-    except:
-        return None
-
-
 # --- Callbacks ---
 @app.callback(
     [Output('stock-data-store', 'data'),
@@ -120,7 +108,8 @@ def load_stock_data(n_clicks, init_trigger, ticker, start_date, end_date):
     if trigger_id == 'initialization-div':
         result = check_ticker_data(DEFAULT_TICKER)
         if result:
-            df_json = pd.DataFrame(result.get('data')).to_json(orient='split')  # ensure JSON
+            data = result.get('data')
+            df_json = convert_to_json(data)
             available_years = result.get('available_years', [])
             year_options = [{'label': i, 'value': i} for i in available_years]
             message = f"Data for {DEFAULT_TICKER} retrieved from {result.get('source', 'database')}!"
@@ -144,7 +133,8 @@ def load_stock_data(n_clicks, init_trigger, ticker, start_date, end_date):
         if not result.get('success', False):
             return None, result.get('message', 'Failed to load data'), None, [], None
 
-        df_json = pd.DataFrame(result.get('data')).to_json(orient='split')  # ensure JSON-serializable
+        data = result.get('data')
+        df_json = convert_to_json(data)
         available_years = result.get('available_years', [])
         year_options = [{'label': i, 'value': i} for i in available_years]
         message = f"Data for {ticker.upper()} loaded from {result.get('source', 'unknown')}!"
@@ -152,6 +142,18 @@ def load_stock_data(n_clicks, init_trigger, ticker, start_date, end_date):
 
     except Exception as e:
         return None, f"Error loading data: {str(e)}", None, [], None
+
+
+def convert_to_json(data):
+    """Convert API response to DataFrame JSON safely"""
+    if isinstance(data, list):
+        return pd.DataFrame(data).to_json(orient='split')
+    elif isinstance(data, str):
+        return data
+    elif isinstance(data, dict):
+        return pd.DataFrame([data]).to_json(orient='split')
+    else:
+        return None
 
 
 @app.callback(
@@ -251,6 +253,17 @@ def update_output(json_data, stat_type, year, ticker):
                 dcc.Graph(figure=fig3), dcc.Graph(figure=fig4)]
 
     return []
+
+
+# --- Helper function ---
+def check_ticker_data(ticker):
+    try:
+        response = requests.get(f"{API_URL}/stock/data/{ticker}")
+        if response.status_code == 200 and response.json().get('success', False):
+            return response.json()
+        return None
+    except:
+        return None
 
 
 # --- Main ---
