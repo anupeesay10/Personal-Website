@@ -2,30 +2,48 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 from datetime import date
+import datetime
 import requests
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
 import os
 
-# Defaults
+# Display all rows and columns (optional)
+pd.set_option("display.max_rows", None)
+pd.set_option("display.max_columns", None)
+
+# Default values
 DEFAULT_TICKER = "TSLA"
 DEFAULT_START_DATE = "2010-06-29"
 DEFAULT_END_DATE = date.today().strftime("%Y-%m-%d")
+
+# API endpoint — get from environment or fallback
 API_URL = os.environ.get("API_URL", "https://stock-api-bj3r.onrender.com/api")
 
 # Dash app
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
-server = app.server  # For Gunicorn / Render
+server = app.server  # For Render / Gunicorn
 
-# Layout
+# Dropdown options for statistics view
+dropdown_options = [
+    {'label': 'Yearly Statistics', 'value': 'Yearly Statistics'},
+    {'label': 'All Years Statistics', 'value': 'All Years Statistics'}
+]
+
+# Initial year list
+current_year = datetime.datetime.now().year
+year_list = [i for i in range(2010, current_year + 1)]
+
+# --- Layout ---
 app.layout = html.Div([
     html.H1("Stock Dashboard", style={'textAlign': 'center', 'color': '#003366'}),
 
     html.Div([
         html.Div([
-            html.Label("Stock Ticker:"),
-            dcc.Input(id='ticker-input', type='text', value=DEFAULT_TICKER, style={'width': '100%'}),
+            html.Label("Enter Stock Ticker:"),
+            dcc.Input(id='ticker-input', type='text', value=DEFAULT_TICKER,
+                      style={'width': '100%', 'padding': '8px', 'margin-bottom': '10px'}),
         ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
 
         html.Div([
@@ -40,90 +58,125 @@ app.layout = html.Div([
                                  display_format='YYYY-MM-DD', style={'width': '100%'})
         ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
 
-        html.Button("Load Stock Data", id='load-btn', n_clicks=0,
-                    style={'width': '100%', 'margin-top': '10px', 'background-color': '#003366', 'color': 'white'})
-    ], style={'border': '1px solid #ddd', 'padding': '10px', 'border-radius': '5px', 'margin-bottom': '20px'}),
+        html.Button('Load Stock Data', id='submit-button', n_clicks=0,
+                    style={'width': '100%', 'padding': '10px', 'margin-top': '20px',
+                           'background-color': '#003366', 'color': 'white'}),
+    ], style={'margin-bottom': '20px', 'border': '1px solid #ddd', 'padding': '10px', 'border-radius': '5px'}),
 
-    html.Div(id='data-message', style={'margin': '10px 0', 'color': 'green'}),
+    html.Div(id='data-loaded-message', style={'margin': '10px 0', 'color': 'green'}),
 
     html.Div([
         html.Label("Statistics Type:"),
-        dcc.Dropdown(id='stat-select', options=[
-            {'label': 'Yearly Statistics', 'value': 'yearly'},
-            {'label': 'All Years Statistics', 'value': 'all'}
-        ], value='yearly'),
-    ], style={'width': '30%', 'padding': '10px'}),
+        dcc.Dropdown(id='stat-select', options=dropdown_options, value='Yearly Statistics')
+    ]),
 
     html.Div([
         html.Label("Select Year:"),
-        dcc.Dropdown(id='year-select', style={'width': '30%', 'padding': '10px'})
+        dcc.Dropdown(id='select-year', options=[{'label': i, 'value': i} for i in year_list],
+                     value=year_list[-1])
     ]),
 
-    dcc.Store(id='stock-store'),
-    html.Div(id='graph-container', style={'padding': '20px'})
+    html.Div(id='output-container', className='chart-grid', style={'padding': '20px'}),
+
+    # Store loaded data
+    dcc.Store(id='stock-data-store'),
+    dcc.Store(id='years-available'),
+    html.Div(id='initialization-div', style={'display': 'none'})
 ])
 
 
-# --- Load stock data ---
+# --- Helper function ---
+def check_ticker_data(ticker):
+    try:
+        response = requests.get(f"{API_URL}/stock/data/{ticker}")
+        if response.status_code == 200 and response.json().get('success', False):
+            return response.json()
+        return None
+    except:
+        return None
+
+
+# --- Callbacks ---
 @app.callback(
-    [Output('stock-store', 'data'),
-     Output('data-message', 'children'),
-     Output('year-select', 'options'),
-     Output('year-select', 'value')],
-    Input('load-btn', 'n_clicks'),
+    [Output('stock-data-store', 'data'),
+     Output('data-loaded-message', 'children'),
+     Output('years-available', 'data'),
+     Output('select-year', 'options'),
+     Output('select-year', 'value')],
+    [Input('submit-button', 'n_clicks'),
+     Input('initialization-div', 'children')],
     [State('ticker-input', 'value'),
      State('start-date-picker', 'date'),
      State('end-date-picker', 'date')]
 )
-def load_stock(n_clicks, ticker, start, end):
-    if not n_clicks:
+def load_stock_data(n_clicks, init_trigger, ticker, start_date, end_date):
+    import dash
+    ctx = dash.callback_context
+    trigger_id = ctx.triggered[0]['prop_id'].split('.')[0] if ctx.triggered else None
+
+    if trigger_id == 'initialization-div':
+        result = check_ticker_data(DEFAULT_TICKER)
+        if result:
+            df_json = result.get('data')
+            years = [int(y) for y in result.get('available_years', [])]
+            year_options = [{'label': y, 'value': y} for y in years]
+            message = f"Data for {DEFAULT_TICKER} retrieved from {result.get('source', 'database')}!"
+            return df_json, message, years, year_options, years[-1] if years else None
+        return None, "Please load stock data by clicking 'Load Stock Data'", [], [], None
+
+    if n_clicks is None or not ticker:
         raise dash.exceptions.PreventUpdate
-    if not ticker:
-        return None, "Enter a valid ticker.", [], None
+
     try:
-        resp = requests.post(f"{API_URL}/stock/load",
-                             json={"ticker": ticker.upper(), "start_date": start, "end_date": end})
-        result = resp.json()
+        payload = {"ticker": ticker.upper(), "start_date": start_date, "end_date": end_date}
+        response = requests.post(f"{API_URL}/stock/load", json=payload)
 
-        if not result.get("success"):
-            return None, result.get("message", "Failed to load data"), [], None
+        if response.status_code != 200:
+            return None, response.json().get('message', 'Unknown error'), [], [], None
 
-        # --- SAFELY convert to DataFrame ---
+        result = response.json()
+        if not result.get('success', False):
+            return None, result.get('message', 'Failed to load data'), [], [], None
+
+        # Convert data to DataFrame safely
         data = result.get('data', [])
         if isinstance(data, str):
-            # If API returns JSON string
-            data = pd.read_json(data, orient='split').to_dict(orient='records')
-        df = pd.DataFrame(data)
+            df = pd.read_json(data, orient='split')
+        else:
+            df = pd.DataFrame(data)
+
         if df.empty:
-            return None, f"No data returned for {ticker.upper()}", [], None
+            return None, f"No data returned for {ticker.upper()}", [], [], None
 
         df_json = df.to_json(orient='split')
+
+        # Prepare years (convert to Python ints)
         years = sorted(result.get('available_years', df['date'].apply(lambda x: pd.to_datetime(x).year).unique()))
+        years = [int(y) for y in years]
         year_options = [{'label': y, 'value': y} for y in years]
-        return df_json, f"Data for {ticker.upper()} loaded!", year_options, years[-1] if years else None
+
+        return df_json, f"Data for {ticker.upper()} loaded!", years, year_options, years[-1] if years else None
 
     except Exception as e:
-        return None, f"Error loading data: {str(e)}", [], None
+        return None, f"Error loading data: {str(e)}", [], [], None
 
 
-# --- Enable/disable year dropdown ---
 @app.callback(
-    Output('year-select', 'disabled'),
+    Output('select-year', 'disabled'),
     Input('stat-select', 'value')
 )
-def disable_year_dropdown(stat_type):
-    return stat_type == 'all'
+def toggle_year_dropdown(stat_type):
+    return stat_type == 'All Years Statistics'
 
 
-# --- Update charts ---
 @app.callback(
-    Output('graph-container', 'children'),
-    [Input('stock-store', 'data'),
+    Output('output-container', 'children'),
+    [Input('stock-data-store', 'data'),
      Input('stat-select', 'value'),
-     Input('year-select', 'value'),
+     Input('select-year', 'value'),
      Input('ticker-input', 'value')]
 )
-def update_graph(json_data, stat_type, year, ticker):
+def update_output(json_data, stat_type, year, ticker):
     if not json_data:
         return html.Div("Please load stock data first.")
 
@@ -131,88 +184,85 @@ def update_graph(json_data, stat_type, year, ticker):
     df['date'] = pd.to_datetime(df['date'])
     stock_name = ticker.upper() if ticker else "Stock"
 
-    graphs = []
-
-    if stat_type == 'all':
+    # All years statistics
+    if stat_type == 'All Years Statistics':
         start_year, end_year = df['date'].dt.year.min(), df['date'].dt.year.max()
+
         # Candlestick
         fig1 = go.Figure(data=[go.Candlestick(
-            x=df['date'], open=df['Open'], high=df['High'], low=df['Low'], close=df['Adj Close']
+            x=df['date'], open=df['Open'], high=df['High'],
+            low=df['Low'], close=df['Adj Close']
         )])
-        fig1.update_layout(title=f"{stock_name} Candlestick ({start_year}-{end_year})",
-                           xaxis_title="Date", yaxis_title="Price", xaxis_rangeslider_visible=True,
+        fig1.update_layout(title=f'{stock_name} Candlestick ({start_year}-{end_year})',
+                           yaxis_title='Price', xaxis_title='Date', xaxis_rangeslider_visible=True,
                            width=1900, height=700)
-        graphs.append(dcc.Graph(figure=fig1))
 
         # Volume
         df['Year'] = df['date'].dt.year
         yearly_volume = df.groupby('Year')['Volume'].mean().reset_index()
         fig2 = px.area(yearly_volume, x='Year', y='Volume',
-                       title=f"{stock_name} Avg Trading Volume per Year ({start_year}-{end_year})",
+                       title=f'Average {stock_name} Trading Volume Per Year ({start_year}-{end_year})',
                        width=1900, height=700, markers=True)
-        graphs.append(dcc.Graph(figure=fig2))
+        fig2.update_layout(xaxis_title='Year')
 
         # Daily Returns
         df['daily_return'] = df['Adj Close'].pct_change() * 100
         yearly_return = df.groupby('Year')['daily_return'].mean().reset_index()
         yearly_return['return_category'] = yearly_return['daily_return'].apply(lambda x: 'Positive' if x > 0 else 'Negative')
         fig3 = px.bar(yearly_return, x='Year', y='daily_return', color='return_category',
-                      color_discrete_map={'Positive': 'green', 'Negative': 'red'},
-                      title=f"{stock_name} Avg Daily Returns ({start_year}-{end_year})",
-                      width=1900, height=700)
-        fig3.update_layout(yaxis_title="Percent Daily Return (%)", xaxis_title="Year")
-        graphs.append(dcc.Graph(figure=fig3))
+                      color_discrete_map={'Positive': 'green', 'Negative': 'red'})
+        fig3.update_layout(title=f'Average Daily Returns Per Year for {stock_name}',
+                           yaxis_title='Percent Daily Return (%)', xaxis_title='Year',
+                           legend_title_text="Return Category", width=1900, height=700)
 
-        # Drawdowns
+        # Drawdown
         df['Cumulative Max'] = df['Adj Close'].cummax()
         df['Drawdown'] = (df['Adj Close'] / df['Cumulative Max'] - 1) * 100
-        fig4 = px.area(df, x='date', y='Drawdown', title=f"{stock_name} Drawdowns ({start_year}-{end_year})",
-                       width=1900, height=700)
-        graphs.append(dcc.Graph(figure=fig4))
+        fig4 = px.area(df, x='date', y='Drawdown', title=f'{stock_name} Drawdowns Over All Years')
+        fig4.update_layout(yaxis_title='Percent Drawdown (%)', xaxis_title='Date', width=1900, height=700)
 
-    elif stat_type == 'yearly' and year:
-        df_year = df[df['date'].dt.year == year]
-        if df_year.empty:
+        return [dcc.Graph(figure=fig1), dcc.Graph(figure=fig2),
+                dcc.Graph(figure=fig3), dcc.Graph(figure=fig4)]
+
+    # Yearly statistics
+    elif stat_type == 'Yearly Statistics' and year:
+        year_data = df[df['date'].dt.year == int(year)]
+        if year_data.empty:
             return html.Div(f"No data available for {stock_name} in {year}.")
 
-        # Candlestick
         fig1 = go.Figure(data=[go.Candlestick(
-            x=df_year['date'], open=df_year['Open'], high=df_year['High'],
-            low=df_year['Low'], close=df_year['Adj Close']
+            x=year_data['date'], open=year_data['Open'], high=year_data['High'],
+            low=year_data['Low'], close=year_data['Adj Close']
         )])
-        fig1.update_layout(title=f"{stock_name} Candlestick ({year})",
-                           xaxis_title="Date", yaxis_title="Price", xaxis_rangeslider_visible=True,
+        fig1.update_layout(title=f'{stock_name} Candlestick for {year}',
+                           yaxis_title='Price', xaxis_title='Date', xaxis_rangeslider_visible=True,
                            width=1900, height=700)
-        graphs.append(dcc.Graph(figure=fig1))
 
-        # Volume
-        fig2 = px.area(df_year, x='date', y='Volume',
-                       title=f"{stock_name} Daily Trading Volume ({year})",
+        fig2 = px.area(year_data, x='date', y='Volume', title=f'{stock_name} Daily Trading Volume for {year}',
                        width=1900, height=700)
-        fig2.update_layout(xaxis_title="Date")
-        graphs.append(dcc.Graph(figure=fig2))
+        fig2.update_layout(xaxis_title='Date')
 
-        # Daily Returns
-        df_year['daily_return'] = df_year['Adj Close'].pct_change() * 100
-        daily_return = df_year.groupby('date')['daily_return'].mean().reset_index()
-        daily_return['return_category'] = daily_return['daily_return'].apply(lambda x: 'Positive' if x > 0 else 'Negative')
-        fig3 = px.bar(daily_return, x='date', y='daily_return', color='return_category',
-                      color_discrete_map={'Positive': 'green', 'Negative': 'red'},
-                      title=f"{stock_name} Daily Returns ({year})",
-                      width=1900, height=700)
-        fig3.update_layout(yaxis_title="Percent Daily Return (%)", xaxis_title="Date")
-        graphs.append(dcc.Graph(figure=fig3))
+        year_data['daily_return'] = year_data['Adj Close'].pct_change() * 100
+        yearly_return = year_data.groupby('date')['daily_return'].mean().reset_index()
+        yearly_return['return_category'] = yearly_return['daily_return'].apply(lambda x: 'Positive' if x > 0 else 'Negative')
+        fig3 = px.bar(yearly_return, x='date', y='daily_return', color='return_category',
+                      color_discrete_map={'Positive': 'green', 'Negative': 'red'})
+        fig3.update_layout(title=f"{stock_name} Average Daily Returns for {year}",
+                           yaxis_title='Percent Daily Return (%)', xaxis_title='Date',
+                           legend_title_text="Return Category", width=1900, height=700)
 
-        # Drawdowns
-        df_year['Cumulative Max'] = df_year['Adj Close'].cummax()
-        df_year['Drawdown'] = (df_year['Adj Close'] / df_year['Cumulative Max'] - 1) * 100
-        fig4 = px.area(df_year, x='date', y='Drawdown', title=f"{stock_name} Drawdowns ({year})",
-                       width=1900, height=700)
-        graphs.append(dcc.Graph(figure=fig4))
+        year_data['Cumulative Max'] = year_data['Adj Close'].cummax()
+        year_data['Drawdown'] = (year_data['Adj Close'] / year_data['Cumulative Max'] - 1) * 100
+        fig4 = px.area(year_data, x='date', y='Drawdown', title=f'{stock_name} Drawdowns for {year}')
+        fig4.update_layout(yaxis_title='Percent Drawdown (%)', xaxis_title='Date', width=1900, height=700)
 
-    return graphs
+        return [dcc.Graph(figure=fig1), dcc.Graph(figure=fig2),
+                dcc.Graph(figure=fig3), dcc.Graph(figure=fig4)]
+
+    return []
 
 
-# --- Run server ---
+# --- Main ---
 if __name__ == "__main__":
-    app.run_server(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8050)))
+    port = int(os.environ.get("PORT", 8050))
+    app.run(host="0.0.0.0", port=port, debug=True)
