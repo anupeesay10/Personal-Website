@@ -84,14 +84,24 @@ def load_stock(n_clicks, ticker, start, end):
         resp = requests.post(f"{API_URL}/stock/load",
                              json={"ticker": ticker.upper(), "start_date": start, "end_date": end})
         result = resp.json()
+
         if not result.get("success"):
             return None, result.get("message", "Failed to load data"), [], None
 
-        df = pd.DataFrame(result['data'])
+        # --- SAFELY convert to DataFrame ---
+        data = result.get('data', [])
+        if isinstance(data, str):
+            # If API returns JSON string
+            data = pd.read_json(data, orient='split').to_dict(orient='records')
+        df = pd.DataFrame(data)
+        if df.empty:
+            return None, f"No data returned for {ticker.upper()}", [], None
+
         df_json = df.to_json(orient='split')
-        years = sorted(result.get('available_years', []))
+        years = sorted(result.get('available_years', df['date'].apply(lambda x: pd.to_datetime(x).year).unique()))
         year_options = [{'label': y, 'value': y} for y in years]
         return df_json, f"Data for {ticker.upper()} loaded!", year_options, years[-1] if years else None
+
     except Exception as e:
         return None, f"Error loading data: {str(e)}", [], None
 
@@ -138,18 +148,17 @@ def update_graph(json_data, stat_type, year, ticker):
         df['Year'] = df['date'].dt.year
         yearly_volume = df.groupby('Year')['Volume'].mean().reset_index()
         fig2 = px.area(yearly_volume, x='Year', y='Volume',
-                       title=f"{stock_name} Average Trading Volume per Year ({start_year}-{end_year})",
+                       title=f"{stock_name} Avg Trading Volume per Year ({start_year}-{end_year})",
                        width=1900, height=700, markers=True)
         graphs.append(dcc.Graph(figure=fig2))
 
         # Daily Returns
         df['daily_return'] = df['Adj Close'].pct_change() * 100
         yearly_return = df.groupby('Year')['daily_return'].mean().reset_index()
-        yearly_return['return_category'] = yearly_return['daily_return'].apply(
-            lambda x: 'Positive' if x > 0 else 'Negative')
+        yearly_return['return_category'] = yearly_return['daily_return'].apply(lambda x: 'Positive' if x > 0 else 'Negative')
         fig3 = px.bar(yearly_return, x='Year', y='daily_return', color='return_category',
                       color_discrete_map={'Positive': 'green', 'Negative': 'red'},
-                      title=f"{stock_name} Average Daily Returns ({start_year}-{end_year})",
+                      title=f"{stock_name} Avg Daily Returns ({start_year}-{end_year})",
                       width=1900, height=700)
         fig3.update_layout(yaxis_title="Percent Daily Return (%)", xaxis_title="Year")
         graphs.append(dcc.Graph(figure=fig3))
@@ -186,8 +195,7 @@ def update_graph(json_data, stat_type, year, ticker):
         # Daily Returns
         df_year['daily_return'] = df_year['Adj Close'].pct_change() * 100
         daily_return = df_year.groupby('date')['daily_return'].mean().reset_index()
-        daily_return['return_category'] = daily_return['daily_return'].apply(
-            lambda x: 'Positive' if x > 0 else 'Negative')
+        daily_return['return_category'] = daily_return['daily_return'].apply(lambda x: 'Positive' if x > 0 else 'Negative')
         fig3 = px.bar(daily_return, x='date', y='daily_return', color='return_category',
                       color_discrete_map={'Positive': 'green', 'Negative': 'red'},
                       title=f"{stock_name} Daily Returns ({year})",
@@ -208,4 +216,3 @@ def update_graph(json_data, stat_type, year, ticker):
 # --- Run server ---
 if __name__ == "__main__":
     app.run_server(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8050)))
-
