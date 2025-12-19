@@ -20,7 +20,7 @@ DEFAULT_START_DATE = "2010-06-29"
 DEFAULT_END_DATE = date.today().strftime("%Y-%m-%d")
 
 # API endpoint — **use the Render service URL for your API service**
-API_URL = os.environ.get("API_URL", "http://localhost:5001/api")
+API_URL = os.environ.get("API_URL", "https://stock-api-rxo2.onrender.com/api")
 
 # Dash app
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
