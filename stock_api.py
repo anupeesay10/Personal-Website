@@ -17,8 +17,11 @@ engine = create_engine(DATABASE_URL)
 app = Flask(__name__)
 CORS(app)
 
+# Optional: prefix all routes with /api
+API_PREFIX = "/api"
+
 # Root route to confirm deployment
-@app.route("/", methods=['GET'])
+@app.route(f"{API_PREFIX}/", methods=['GET'])
 def index():
     return jsonify({
         'success': True,
@@ -26,7 +29,7 @@ def index():
     })
 
 # Health check route
-@app.route("/api/health", methods=['GET'])
+@app.route(f"{API_PREFIX}/health", methods=['GET'])
 def health_check():
     try:
         pd.read_sql_query("SELECT 1;", engine)
@@ -34,9 +37,8 @@ def health_check():
     except Exception as e:
         return jsonify({'success': False, 'message': f'API health check failed: {str(e)}'}), 500
 
-
 # Load stock data
-@app.route('/api/stock/load', methods=['POST'])
+@app.route(f'{API_PREFIX}/stock/load', methods=['POST'])
 def load_stock_data():
     try:
         data = request.get_json()
@@ -118,7 +120,7 @@ def load_stock_data():
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
 # Get stock data
-@app.route('/api/stock/data/<ticker>', methods=['GET'])
+@app.route(f'{API_PREFIX}/stock/data/<ticker>', methods=['GET'])
 def get_stock_data(ticker):
     try:
         table_name = f"{ticker.lower()}_data"
@@ -142,7 +144,7 @@ def get_stock_data(ticker):
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
 # Get available tables
-@app.route('/api/stock/tables', methods=['GET'])
+@app.route(f'{API_PREFIX}/stock/tables', methods=['GET'])
 def get_available_tables():
     try:
         query = """
