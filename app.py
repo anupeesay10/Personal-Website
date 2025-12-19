@@ -1,253 +1,277 @@
-import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
-from datetime import date
-import requests
-import os
-
 import dash
-from dash import dcc, html
-from dash.dependencies import Input, Output, State
+from dash import dcc, html, Input, Output, State
+import plotly.graph_objs as go
+import pandas as pd
+import requests
+import json
+from datetime import date
 
-# Display all rows and columns (optional)
-pd.set_option("display.max_rows", None)
-pd.set_option("display.max_columns", None)
+# ------------------------------
+# Colors from your HTML theme
+# ------------------------------
+colors = {
+    'primary_bg': '#0a0e27',
+    'secondary_bg': '#111630',
+    'tertiary_bg': '#1a1f3a',
+    'text_primary': '#ffffff',
+    'text_secondary': '#b0b5c4',
+    'accent': '#6366f1',
+    'accent_light': '#818cf8',
+    'border_color': '#2a2f4d',
+    'positive': 'green',
+    'negative': 'red',
+    'volume_line': '#003366',
+    'drawdown_line': '#ff6666'
+}
 
-# Default values
-DEFAULT_TICKER = "TSLA"
-DEFAULT_START_DATE = "2010-06-29"
-DEFAULT_END_DATE = date.today().strftime("%Y-%m-%d")
+API_URL = 'http://localhost:5001/api'  # adjust if needed
 
-# API endpoint
-API_URL = os.environ.get("API_URL", "https://stock-api-bj3r.onrender.com/api")
-
-# Dash app
-app = dash.Dash(__name__, suppress_callback_exceptions=True)
+# ------------------------------
+# Dash App
+# ------------------------------
+app = dash.Dash(__name__)
 server = app.server
 
-# Dropdown options
-dropdown_options = [
-    {'label': 'Yearly Statistics', 'value': 'Yearly Statistics'},
-    {'label': 'All Years Statistics', 'value': 'All Years Statistics'}
-]
+today = date.today().isoformat()
 
-# Year list
-current_year = date.today().year
-year_list = list(range(2010, current_year + 1))
+app.layout = html.Div(
+    style={'backgroundColor': colors['primary_bg'], 'color': colors['text_primary'], 'padding': '20px',
+           'fontFamily': 'Arial, sans-serif'},
+    children=[
+        html.H1("Stock Dashboard", style={
+            'textAlign': 'center',
+            'marginBottom': '30px',
+            'fontSize': '2.5em',
+            'background': f"linear-gradient(135deg, {colors['text_primary']}, {colors['text_secondary']})",
+            '-webkit-background-clip': 'text',
+            '-webkit-text-fill-color': 'transparent'
+        }),
 
-# --- Layout ---
-app.layout = html.Div([
-    html.H1("Stock Dashboard", style={'textAlign': 'center', 'color': '#003366'}),
-    html.Div([
-        html.Div([
-            html.Label("Enter Stock Ticker:"),
-            dcc.Input(id='ticker-input', type='text', value=DEFAULT_TICKER,
-                      style={'width': '100%', 'padding': '8px', 'margin-bottom': '10px'}),
-        ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
-        html.Div([
-            html.Label("Start Date:"),
-            dcc.DatePickerSingle(id='start-date-picker', date=DEFAULT_START_DATE,
-                                 display_format='YYYY-MM-DD', style={'width': '100%'})
-        ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
-        html.Div([
-            html.Label("End Date:"),
-            dcc.DatePickerSingle(id='end-date-picker', date=DEFAULT_END_DATE,
-                                 display_format='YYYY-MM-DD', style={'width': '100%'})
-        ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
-        html.Button('Load Stock Data', id='submit-button', n_clicks=0,
-                    style={'width': '100%', 'padding': '10px', 'margin-top': '20px',
-                           'background-color': '#003366', 'color': 'white'}),
-    ], style={'margin-bottom': '20px', 'border': '1px solid #ddd', 'padding': '10px', 'border-radius': '5px'}),
-    html.Div(id='data-loaded-message', style={'margin': '10px 0', 'color': 'green'}),
-    html.Div([
-        html.Label("Select Statistics:"),
-        dcc.Dropdown(id='stat-select', options=dropdown_options, value='Yearly Statistics')
-    ]),
-    html.Div([
-        html.Label("Select Year:"),
-        dcc.Dropdown(id='select-year', options=[{'label': i, 'value': i} for i in year_list],
-                     value=year_list[-1])
-    ]),
-    html.Div(id='output-container', className='chart-grid', style={'padding': '20px'}),
-    dcc.Store(id='stock-data-store'),
-    dcc.Store(id='years-available'),
-    html.Div(id='initialization-div', style={'display': 'none'})
-])
+        # Controls
+        html.Div(
+            style={'backgroundColor': colors['tertiary_bg'], 'border': f'1px solid {colors["border_color"]}',
+                   'borderRadius': '8px', 'padding': '20px', 'marginBottom': '20px'},
+            children=[
+                html.Div(
+                    style={'display': 'grid', 'gridTemplateColumns': 'repeat(auto-fit, minmax(250px, 1fr))',
+                           'gap': '20px', 'marginBottom': '20px'},
+                    children=[
+                        html.Div([
+                            html.Label("Enter Stock Ticker:", style={'marginBottom': '8px'}),
+                            dcc.Input(id='ticker-input', type='text', value='TSLA',
+                                      style={'padding': '10px', 'borderRadius': '6px',
+                                             'border': f'1px solid {colors["border_color"]}',
+                                             'backgroundColor': colors['primary_bg'], 'color': colors['text_primary']})
+                        ]),
+                        html.Div([
+                            html.Label("Start Date:", style={'marginBottom': '8px'}),
+                            dcc.Input(id='start-date-input', type='date', value='2010-06-29',
+                                      style={'padding': '10px', 'borderRadius': '6px',
+                                             'border': f'1px solid {colors["border_color"]}',
+                                             'backgroundColor': colors['primary_bg'], 'color': colors['text_primary']})
+                        ]),
+                        html.Div([
+                            html.Label("End Date:", style={'marginBottom': '8px'}),
+                            dcc.Input(id='end-date-input', type='date', value=today,
+                                      style={'padding': '10px', 'borderRadius': '6px',
+                                             'border': f'1px solid {colors["border_color"]}',
+                                             'backgroundColor': colors['primary_bg'], 'color': colors['text_primary']})
+                        ])
+                    ]
+                ),
 
-# --- Callbacks ---
-@app.callback(
-    [Output('stock-data-store', 'data'),
-     Output('data-loaded-message', 'children'),
-     Output('years-available', 'data'),
-     Output('select-year', 'options'),
-     Output('select-year', 'value')],
-    [Input('submit-button', 'n_clicks'),
-     Input('initialization-div', 'children')],
-    [State('ticker-input', 'value'),
-     State('start-date-picker', 'date'),
-     State('end-date-picker', 'date')]
+                html.Div(
+                    style={'display': 'flex', 'gap': '10px', 'marginTop': '20px'},
+                    children=[
+                        html.Button("Load Stock Data", id='load-button', n_clicks=0,
+                                    style={'padding': '12px 20px', 'backgroundColor': colors['accent'],
+                                           'color': 'white',
+                                           'border': 'none', 'borderRadius': '6px', 'cursor': 'pointer'}),
+                        html.Button("Clear", id='clear-button', n_clicks=0,
+                                    style={'padding': '12px 20px', 'backgroundColor': colors['border_color'],
+                                           'color': 'white',
+                                           'border': 'none', 'borderRadius': '6px', 'cursor': 'pointer'})
+                    ]
+                ),
+
+                html.Div(id='message', style={'marginTop': '15px'})
+            ]
+        ),
+
+        # Statistics Controls
+        html.Div(
+            id='statistics-controls',
+            style={'display': 'none', 'gridTemplateColumns': 'repeat(auto-fit, minmax(250px, 1fr))', 'gap': '20px',
+                   'marginBottom': '20px'},
+            children=[
+                html.Div([
+                    html.Label("Select Statistics:"),
+                    dcc.Dropdown(
+                        id='stat-select',
+                        options=[
+                            {'label': 'Yearly Statistics', 'value': 'Yearly Statistics'},
+                            {'label': 'All Years Statistics', 'value': 'All Years Statistics'}
+                        ],
+                        value='Yearly Statistics',
+                        style={'backgroundColor': colors['primary_bg'], 'color': colors['text_primary']}
+                    )
+                ]),
+                html.Div([
+                    html.Label("Select Year:"),
+                    dcc.Dropdown(
+                        id='year-select',
+                        style={'backgroundColor': colors['primary_bg'], 'color': colors['text_primary']}
+                    )
+                ])
+            ]
+        ),
+
+        # Charts Container
+        html.Div(id='charts-container', style={'marginTop': '30px'})
+    ]
 )
-def load_stock_data(n_clicks, init_trigger, ticker, start_date, end_date):
-    import dash
-    ctx = dash.callback_context
-    trigger_id = ctx.triggered[0]['prop_id'].split('.')[0] if ctx.triggered else None
 
-    # Initialization
-    if trigger_id == 'initialization-div':
-        result = check_ticker_data(DEFAULT_TICKER)
-        if result:
-            df_json = result.get('data')
-            available_years = result.get('available_years', [])
-            year_options = [{'label': i, 'value': i} for i in available_years]
-            message = f"Data for {DEFAULT_TICKER} retrieved from {result.get('source', 'database')}!"
-            return df_json, message, available_years, year_options, available_years[-1] if available_years else None
-        return None, "Please load stock data by clicking the 'Load Stock Data' button", None, [], None
 
-    if n_clicks is None:
-        raise dash.exceptions.PreventUpdate
-
+# ------------------------------
+# Callbacks
+# ------------------------------
+@app.callback(
+    Output('message', 'children'),
+    Output('statistics-controls', 'style'),
+    Output('year-select', 'options'),
+    Output('charts-container', 'children'),
+    Input('load-button', 'n_clicks'),
+    State('ticker-input', 'value'),
+    State('start-date-input', 'value'),
+    State('end-date-input', 'value'),
+    prevent_initial_call=True
+)
+def load_stock_data(n_clicks, ticker, start_date, end_date):
     if not ticker:
-        return None, "Please enter a valid ticker symbol", None, [], None
+        return "Please enter a valid ticker symbol", {'display': 'none'}, [], []
 
     try:
-        payload = {"ticker": ticker.upper(), "start_date": start_date, "end_date": end_date}
-        response = requests.post(f"{API_URL}/stock/load", json=payload)
-        if response.status_code != 200:
-            return None, response.json().get('message', 'Unknown error occurred'), None, [], None
+        response = requests.post(f"{API_URL}/stock/load", json={
+            "ticker": ticker.upper(),
+            "start_date": start_date,
+            "end_date": end_date
+        }, timeout=10)
+        data = response.json()
+        if not response.ok or not data.get('success'):
+            return data.get('message', 'Failed to load data'), {'display': 'none'}, [], []
 
-        result = response.json()
-        if not result.get('success', False):
-            return None, result.get('message', 'Failed to load data'), None, [], None
+        df = pd.DataFrame(data['data'])
+        df['date'] = pd.to_datetime(df['date'])
+        available_years = sorted(df['date'].dt.year.unique(), reverse=True)
 
-        df_json = result.get('data')
-        available_years = result.get('available_years', [])
-        year_options = [{'label': i, 'value': i} for i in available_years]
-        message = f"Data for {ticker.upper()} loaded from {result.get('source', 'unknown')}!"
-        return df_json, message, available_years, year_options, available_years[-1] if available_years else None
+        # Prepare year dropdown options
+        year_options = [{'label': str(y), 'value': y} for y in available_years]
 
+        # Initial charts (latest year)
+        children = render_yearly_charts(df, ticker.upper(), available_years[0])
+
+        return f"Data for {ticker.upper()} loaded successfully!", {'display': 'grid',
+                                                                   'gridTemplateColumns': 'repeat(auto-fit, minmax(250px, 1fr))',
+                                                                   'gap': '20px'}, year_options, children
     except Exception as e:
-        return None, f"Error loading data: {str(e)}", None, [], None
+        return f"Error loading data: {e}", {'display': 'none'}, [], []
 
-@app.callback(
-    Output('select-year', 'disabled'),
-    Input('stat-select', 'value')
-)
-def toggle_year_dropdown(stat_type):
-    return stat_type == 'All Years Statistics'
 
-@app.callback(
-    Output('output-container', 'children'),
-    [Input('stock-data-store', 'data'),
-     Input('stat-select', 'value'),
-     Input('select-year', 'value'),
-     Input('ticker-input', 'value')]
-)
-def update_output(json_data, stat_type, year, ticker):
-    if json_data is None:
-        return html.Div("Please load stock data first.")
+# ------------------------------
+# Helper functions for charts
+# ------------------------------
+def render_yearly_charts(df, ticker, year):
+    year_df = df[df['date'].dt.year == year]
+    if year_df.empty:
+        return [html.Div(f"No data available for {ticker} in {year}", style={'color': colors['text_secondary']})]
 
-    df2 = pd.read_json(json_data, orient='split')
-    df2['date'] = pd.to_datetime(df2['date'])
+    charts = []
 
-    # Use Close if Adj Close is missing
-    price_col = 'Adj Close' if 'Adj Close' in df2.columns else 'Close'
+    # Candlestick
+    candlestick = go.Figure(data=[go.Candlestick(
+        x=year_df['date'],
+        open=year_df['Open'],
+        high=year_df['High'],
+        low=year_df['Low'],
+        close=year_df['Adj Close']
+    )])
+    candlestick.update_layout(
+        title=f"{ticker} Stock Candlestick Chart for {year}",
+        yaxis_title='Price',
+        xaxis_title='Date',
+        plot_bgcolor=colors['secondary_bg'],
+        paper_bgcolor=colors['secondary_bg'],
+        font_color=colors['text_primary'],
+        height=700
+    )
+    charts.append(dcc.Graph(figure=candlestick))
 
-    # Ensure numeric columns
-    for col in ['Open', 'High', 'Low', 'Close', 'Volume', price_col]:
-        if col in df2.columns:
-            df2[col] = pd.to_numeric(df2[col], errors='coerce')
+    # Volume
+    volume = go.Figure(data=[go.Scatter(
+        x=year_df['date'],
+        y=year_df['Volume'],
+        mode='lines',
+        line={'color': colors['volume_line']},
+        fill='tozeroy'
+    )])
+    volume.update_layout(
+        title=f"{ticker} Daily Trading Volume for {year}",
+        yaxis_title='Volume',
+        xaxis_title='Date',
+        plot_bgcolor=colors['secondary_bg'],
+        paper_bgcolor=colors['secondary_bg'],
+        font_color=colors['text_primary'],
+        height=700
+    )
+    charts.append(dcc.Graph(figure=volume))
 
-    stock_name = ticker.upper() if ticker else "Stock"
+    # Daily returns
+    daily_returns = ((year_df['Adj Close'].pct_change()) * 100).fillna(0)
+    colors_list = [colors['positive'] if v >= 0 else colors['negative'] for v in daily_returns]
+    returns_fig = go.Figure(data=[go.Bar(
+        x=year_df['date'],
+        y=daily_returns,
+        marker_color=colors_list
+    )])
+    returns_fig.update_layout(
+        title=f"{ticker} Daily Returns for {year}",
+        yaxis_title='Percent Daily Return (%)',
+        xaxis_title='Date',
+        plot_bgcolor=colors['secondary_bg'],
+        paper_bgcolor=colors['secondary_bg'],
+        font_color=colors['text_primary'],
+        height=700,
+        showlegend=False
+    )
+    charts.append(dcc.Graph(figure=returns_fig))
 
-    # --- All Years Statistics ---
-    if stat_type == 'All Years Statistics':
-        start_year, end_year = df2['date'].dt.year.min(), df2['date'].dt.year.max()
+    # Drawdowns
+    cumulative_max = year_df['Adj Close'].cummax()
+    drawdowns = ((year_df['Adj Close'] / cumulative_max - 1) * 100)
+    drawdown_fig = go.Figure(data=[go.Scatter(
+        x=year_df['date'],
+        y=drawdowns,
+        mode='lines',
+        fill='tozeroy',
+        line={'color': colors['drawdown_line']}
+    )])
+    drawdown_fig.update_layout(
+        title=f"{ticker} Drawdowns for {year}",
+        yaxis_title='Percent Drawdown (%)',
+        xaxis_title='Date',
+        plot_bgcolor=colors['secondary_bg'],
+        paper_bgcolor=colors['secondary_bg'],
+        font_color=colors['text_primary'],
+        height=700
+    )
+    charts.append(dcc.Graph(figure=drawdown_fig))
 
-        # Candlestick
-        fig1 = go.Figure(data=[go.Candlestick(
-            x=df2['date'], open=df2['Open'], high=df2['High'],
-            low=df2['Low'], close=df2[price_col]
-        )])
-        fig1.update_layout(title=f'{stock_name} Candlestick ({start_year}-{end_year})',
-                           yaxis_title='Price', xaxis_title='Date', xaxis_rangeslider_visible=True,
-                           width=1900, height=700)
+    return charts
 
-        # Volume
-        df2['Year'] = df2['date'].dt.year
-        yearly_volume = df2.groupby('Year')['Volume'].mean().reset_index()
-        fig2 = px.area(yearly_volume, x='Year', y='Volume',
-                       title=f'Average {stock_name} Trading Volume Per Year ({start_year}-{end_year})',
-                       width=1900, height=700, markers=True)
-        fig2.update_layout(xaxis_title='Date')
 
-        # Daily Returns
-        df2['daily_return'] = df2[price_col].pct_change() * 100
-        yearly_return = df2.groupby('Year')['daily_return'].mean().reset_index()
-        yearly_return['return_category'] = yearly_return['daily_return'].apply(
-            lambda x: 'Positive' if x > 0 else 'Negative')
-        fig3 = px.bar(yearly_return, x='Year', y='daily_return', color='return_category',
-                      color_discrete_map={'Positive': 'green', 'Negative': 'red'})
-        fig3.update_layout(title=f'Average Daily Returns Per Year for {stock_name}',
-                           yaxis_title='Percent Daily Return (%)', xaxis_title='Date',
-                           legend_title_text="Return Category", width=1900, height=700)
+# ------------------------------
+# Run server
+# ------------------------------
+if __name__ == '__main__':
+    app.run_server(debug=True)
 
-        # Drawdown
-        df2['Cumulative Max'] = df2[price_col].cummax()
-        df2['Drawdown'] = (df2[price_col] / df2['Cumulative Max'] - 1) * 100
-        fig4 = px.area(df2, x='date', y='Drawdown', title=f'{stock_name} Drawdowns Over All Years')
-        fig4.update_layout(yaxis_title='Percent Drawdown (%)', xaxis_title='Date', width=1900, height=700)
-
-        return [dcc.Graph(figure=fig1), dcc.Graph(figure=fig2),
-                dcc.Graph(figure=fig3), dcc.Graph(figure=fig4)]
-
-    # --- Yearly Statistics ---
-    elif stat_type == 'Yearly Statistics' and year:
-        year_data = df2[df2['date'].dt.year == year]
-        if year_data.empty:
-            return html.Div(f"No data available for {stock_name} in {year}.")
-
-        fig1 = go.Figure(data=[go.Candlestick(
-            x=year_data['date'], open=year_data['Open'], high=year_data['High'],
-            low=year_data['Low'], close=year_data[price_col]
-        )])
-        fig1.update_layout(title=f'{stock_name} Candlestick for {year}',
-                           yaxis_title='Price', xaxis_title='Date', xaxis_rangeslider_visible=True,
-                           width=1900, height=700)
-
-        fig2 = px.area(year_data, x='date', y='Volume', title=f'{stock_name} Daily Trading Volume for {year}',
-                       width=1900, height=700)
-        fig2.update_layout(xaxis_title='Date')
-
-        year_data['daily_return'] = year_data[price_col].pct_change() * 100
-        year_data['return_category'] = year_data['daily_return'].apply(
-            lambda x: 'Positive' if x > 0 else 'Negative')
-        fig3 = px.bar(year_data, x='date', y='daily_return', color='return_category',
-                      color_discrete_map={'Positive': 'green', 'Negative': 'red'})
-        fig3.update_layout(title=f"{stock_name} Average Daily Returns for {year}",
-                           yaxis_title='Percent Daily Return (%)', xaxis_title='Date',
-                           legend_title_text="Return Category", width=1900, height=700)
-
-        year_data['Cumulative Max'] = year_data[price_col].cummax()
-        year_data['Drawdown'] = (year_data[price_col] / year_data['Cumulative Max'] - 1) * 100
-        fig4 = px.area(year_data, x='date', y='Drawdown', title=f'{stock_name} Drawdowns for {year}')
-        fig4.update_layout(yaxis_title='Percent Drawdown (%)', xaxis_title='Date', width=1900, height=700)
-
-        return [dcc.Graph(figure=fig1), dcc.Graph(figure=fig2),
-                dcc.Graph(figure=fig3), dcc.Graph(figure=fig4)]
-
-    return []
-
-# --- Helper ---
-def check_ticker_data(ticker):
-    try:
-        response = requests.get(f"{API_URL}/stock/data/{ticker}")
-        if response.status_code == 200 and response.json().get('success', False):
-            return response.json()
-        return None
-    except:
-        return None
-
-# --- Main ---
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8050))
-    app.run(host="0.0.0.0", port=port, debug=True)
