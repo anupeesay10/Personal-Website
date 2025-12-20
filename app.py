@@ -268,7 +268,7 @@ def update_output(json_data, stat_type, year, ticker):
             low=df2['Low'], close=df2[price_col]
         )])
         fig1.update_layout(title=f'{stock_name} Candlestick ({start_year}-{end_year})',
-                           yaxis_title='Price', xaxis_title='Date', xaxis_rangeslider_visible=True,
+                           yaxis_title='Price (in dollars)', xaxis_title='Date', xaxis_rangeslider_visible=True,
                            width=1900, height=700)
 
         df2['Year'] = df2['date'].dt.year
@@ -307,7 +307,7 @@ def update_output(json_data, stat_type, year, ticker):
             low=year_data['Low'], close=year_data[price_col]
         )])
         fig1.update_layout(title=f'{stock_name} Candlestick for {year}',
-                           yaxis_title='Price', xaxis_title='Date', xaxis_rangeslider_visible=True,
+                           yaxis_title='Price (in dollars)', xaxis_title='Date', xaxis_rangeslider_visible=True,
                            width=1900, height=700)
 
         fig2 = px.area(year_data, x='date', y='Volume', title=f'{stock_name} Daily Trading Volume for {year}',
