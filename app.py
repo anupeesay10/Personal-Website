@@ -17,11 +17,98 @@ DEFAULT_END_DATE = date.today().strftime("%Y-%m-%d")
 # API endpoint
 API_URL = os.environ.get("API_URL", "https://stock-api-bj3r.onrender.com/api")
 
-# Dash app
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
 
-# Dropdown options
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+        <style>
+            :root {{
+                --primary-bg: #0a0e27;
+                --secondary-bg: #111630;
+                --tertiary-bg: #1a1f3a;
+                --text-primary: #ffffff;
+                --text-secondary: #b0b5c4;
+                --accent: #6366f1;
+                --accent-light: #818cf8;
+                --border-color: #2a2f4d;
+            }}
+            * {{
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }}
+            html {{
+                scroll-behavior: smooth;
+            }}
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                background-color: var(--primary-bg);
+                color: var(--text-primary);
+                line-height: 1.6;
+                overflow-x: hidden;
+            }}
+            #react-entry-point {{
+                padding: 2rem;
+                max-width: 1400px;
+                margin: 0 auto;
+            }}
+            input, select, textarea {{
+                background-color: var(--secondary-bg);
+                color: var(--text-primary);
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+                padding: 0.5rem;
+            }}
+            input:focus, select:focus, textarea:focus {{
+                outline: none;
+                border-color: var(--accent);
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            }}
+            button {{
+                background-color: var(--accent);
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 0.5rem 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }}
+            button:hover {{
+                background-color: var(--accent-light);
+                box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+                transform: translateY(-2px);
+            }}
+            h1 {{
+                color: var(--text-primary);
+                margin-bottom: 2rem;
+            }}
+            label {{
+                color: var(--text-secondary);
+                font-weight: 500;
+                display: block;
+                margin-bottom: 0.5rem;
+            }}
+        </style>
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+'''
+
 dropdown_options = [
     {'label': 'Yearly Statistics', 'value': 'Yearly Statistics'},
     {'label': 'All Years Statistics', 'value': 'All Years Statistics'}
