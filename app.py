@@ -9,10 +9,6 @@ import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
 
-# Display all rows and columns (optional)
-pd.set_option("display.max_rows", None)
-pd.set_option("display.max_columns", None)
-
 # Default values
 DEFAULT_TICKER = "TSLA"
 DEFAULT_START_DATE = "2010-06-29"
@@ -37,44 +33,49 @@ year_list = list(range(2010, current_year + 1))
 
 # --- Layout ---
 app.layout = html.Div([
-    html.H1("Stock Dashboard", style={'textAlign': 'center', 'color': '#003366'}),
+    html.H1("Stock Dashboard", style={'textAlign': 'center'}),
+
     html.Div([
         html.Div([
             html.Label("Enter Stock Ticker:"),
-            dcc.Input(id='ticker-input', type='text', value=DEFAULT_TICKER,
-                      style={'width': '100%', 'padding': '8px', 'margin-bottom': '10px'}),
+            dcc.Input(id='ticker-input', type='text', value=DEFAULT_TICKER, style={'width': '100%', 'padding': '8px'})
         ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
+
         html.Div([
             html.Label("Start Date:"),
-            dcc.DatePickerSingle(id='start-date-picker', date=DEFAULT_START_DATE,
-                                 display_format='YYYY-MM-DD', style={'width': '100%'})
+            dcc.DatePickerSingle(id='start-date-picker', date=DEFAULT_START_DATE, display_format='YYYY-MM-DD')
         ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
+
         html.Div([
             html.Label("End Date:"),
-            dcc.DatePickerSingle(id='end-date-picker', date=DEFAULT_END_DATE,
-                                 display_format='YYYY-MM-DD', style={'width': '100%'})
+            dcc.DatePickerSingle(id='end-date-picker', date=DEFAULT_END_DATE, display_format='YYYY-MM-DD')
         ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
-        html.Button('Load Stock Data', id='submit-button', n_clicks=0,
-                    style={'width': '100%', 'padding': '10px', 'margin-top': '20px',
-                           'background-color': '#003366', 'color': 'white'}),
+
+        html.Button('Load Stock Data', id='submit-button', n_clicks=0, style={'margin-top': '20px'})
     ], style={'margin-bottom': '20px', 'border': '1px solid #ddd', 'padding': '10px', 'border-radius': '5px'}),
+
     html.Div(id='data-loaded-message', style={'margin': '10px 0', 'color': 'green'}),
+
     html.Div([
         html.Label("Select Statistics:"),
         dcc.Dropdown(id='stat-select', options=dropdown_options, value='Yearly Statistics')
     ]),
+
     html.Div([
         html.Label("Select Year:"),
-        dcc.Dropdown(id='select-year', options=[{'label': i, 'value': i} for i in year_list],
-                     value=year_list[-1])
+        dcc.Dropdown(id='select-year', options=[{'label': i, 'value': i} for i in year_list], value=year_list[-1])
     ]),
-    html.Div(id='output-container', className='chart-grid', style={'padding': '20px'}),
+
+    html.Div(id='output-container', style={'padding': '20px'}),
+
     dcc.Store(id='stock-data-store'),
     dcc.Store(id='years-available'),
     html.Div(id='initialization-div', style={'display': 'none'})
 ])
 
+
 # --- Callbacks ---
+
 @app.callback(
     [Output('stock-data-store', 'data'),
      Output('data-loaded-message', 'children'),
@@ -109,13 +110,20 @@ def load_stock_data(n_clicks, init_trigger, ticker, start_date, end_date):
     if not ticker:
         return None, "Please enter a valid ticker symbol", None, [], None
 
+    if not start_date or not end_date:
+        return None, "Please select both start and end dates", None, [], None
+
     try:
         payload = {"ticker": ticker.upper(), "start_date": start_date, "end_date": end_date}
-        response = requests.post(f"{API_URL}/stock/load", json=payload)
-        if response.status_code != 200:
-            return None, response.json().get('message', 'Unknown error occurred'), None, [], None
+        response = requests.post(f"{API_URL}/stock/load", json=payload, timeout=10)
+        try:
+            result = response.json()
+        except ValueError:
+            return None, "API did not return valid JSON. Make sure backend is running.", None, [], None
 
-        result = response.json()
+        if response.status_code != 200:
+            return None, result.get('message', 'Unknown error occurred'), None, [], None
+
         if not result.get('success', False):
             return None, result.get('message', 'Failed to load data'), None, [], None
 
@@ -125,8 +133,11 @@ def load_stock_data(n_clicks, init_trigger, ticker, start_date, end_date):
         message = f"Data for {ticker.upper()} loaded from {result.get('source', 'unknown')}!"
         return df_json, message, available_years, year_options, available_years[-1] if available_years else None
 
+    except requests.exceptions.RequestException as e:
+        return None, f"Error contacting API: {str(e)}", None, [], None
     except Exception as e:
-        return None, f"Error loading data: {str(e)}", None, [], None
+        return None, f"Unexpected error: {str(e)}", None, [], None
+
 
 @app.callback(
     Output('select-year', 'disabled'),
@@ -134,6 +145,7 @@ def load_stock_data(n_clicks, init_trigger, ticker, start_date, end_date):
 )
 def toggle_year_dropdown(stat_type):
     return stat_type == 'All Years Statistics'
+
 
 @app.callback(
     Output('output-container', 'children'),
@@ -146,13 +158,14 @@ def update_output(json_data, stat_type, year, ticker):
     if json_data is None:
         return html.Div("Please load stock data first.")
 
-    df2 = pd.read_json(json_data, orient='split')
-    df2['date'] = pd.to_datetime(df2['date'])
+    try:
+        df2 = pd.read_json(json_data, orient='split')
+    except ValueError:
+        return html.Div("Error parsing stock data. Please reload.")
 
-    # Use Close if Adj Close is missing
+    df2['date'] = pd.to_datetime(df2['date'])
     price_col = 'Adj Close' if 'Adj Close' in df2.columns else 'Close'
 
-    # Ensure numeric columns
     for col in ['Open', 'High', 'Low', 'Close', 'Volume', price_col]:
         if col in df2.columns:
             df2[col] = pd.to_numeric(df2[col], errors='coerce')
@@ -163,7 +176,6 @@ def update_output(json_data, stat_type, year, ticker):
     if stat_type == 'All Years Statistics':
         start_year, end_year = df2['date'].dt.year.min(), df2['date'].dt.year.max()
 
-        # Candlestick
         fig1 = go.Figure(data=[go.Candlestick(
             x=df2['date'], open=df2['Open'], high=df2['High'],
             low=df2['Low'], close=df2[price_col]
@@ -172,15 +184,13 @@ def update_output(json_data, stat_type, year, ticker):
                            yaxis_title='Price', xaxis_title='Date', xaxis_rangeslider_visible=True,
                            width=1900, height=700)
 
-        # Volume
         df2['Year'] = df2['date'].dt.year
         yearly_volume = df2.groupby('Year')['Volume'].mean().reset_index()
         fig2 = px.area(yearly_volume, x='Year', y='Volume',
                        title=f'Average {stock_name} Trading Volume Per Year ({start_year}-{end_year})',
                        width=1900, height=700, markers=True)
-        fig2.update_layout(xaxis_title='Date')
+        fig2.update_layout(xaxis_title='Year')
 
-        # Daily Returns
         df2['daily_return'] = df2[price_col].pct_change() * 100
         yearly_return = df2.groupby('Year')['daily_return'].mean().reset_index()
         yearly_return['return_category'] = yearly_return['daily_return'].apply(
@@ -188,10 +198,9 @@ def update_output(json_data, stat_type, year, ticker):
         fig3 = px.bar(yearly_return, x='Year', y='daily_return', color='return_category',
                       color_discrete_map={'Positive': 'green', 'Negative': 'red'})
         fig3.update_layout(title=f'Average Daily Returns Per Year for {stock_name}',
-                           yaxis_title='Percent Daily Return (%)', xaxis_title='Date',
+                           yaxis_title='Percent Daily Return (%)', xaxis_title='Year',
                            legend_title_text="Return Category", width=1900, height=700)
 
-        # Drawdown
         df2['Cumulative Max'] = df2[price_col].cummax()
         df2['Drawdown'] = (df2[price_col] / df2['Cumulative Max'] - 1) * 100
         fig4 = px.area(df2, x='date', y='Drawdown', title=f'{stock_name} Drawdowns Over All Years')
@@ -202,7 +211,7 @@ def update_output(json_data, stat_type, year, ticker):
 
     # --- Yearly Statistics ---
     elif stat_type == 'Yearly Statistics' and year:
-        year_data = df2[df2['date'].dt.year == year]
+        year_data = df2[df2['date'].dt.year == int(year)]
         if year_data.empty:
             return html.Div(f"No data available for {stock_name} in {year}.")
 
@@ -219,8 +228,7 @@ def update_output(json_data, stat_type, year, ticker):
         fig2.update_layout(xaxis_title='Date')
 
         year_data['daily_return'] = year_data[price_col].pct_change() * 100
-        year_data['return_category'] = year_data['daily_return'].apply(
-            lambda x: 'Positive' if x > 0 else 'Negative')
+        year_data['return_category'] = year_data['daily_return'].apply(lambda x: 'Positive' if x > 0 else 'Negative')
         fig3 = px.bar(year_data, x='date', y='daily_return', color='return_category',
                       color_discrete_map={'Positive': 'green', 'Negative': 'red'})
         fig3.update_layout(title=f"{stock_name} Average Daily Returns for {year}",
@@ -235,17 +243,19 @@ def update_output(json_data, stat_type, year, ticker):
         return [dcc.Graph(figure=fig1), dcc.Graph(figure=fig2),
                 dcc.Graph(figure=fig3), dcc.Graph(figure=fig4)]
 
-    return []
+    return html.Div("No data to display.")
+
 
 # --- Helper ---
 def check_ticker_data(ticker):
     try:
-        response = requests.get(f"{API_URL}/stock/data/{ticker}")
+        response = requests.get(f"{API_URL}/stock/data/{ticker}", timeout=5)
         if response.status_code == 200 and response.json().get('success', False):
             return response.json()
         return None
-    except:
+    except requests.exceptions.RequestException:
         return None
+
 
 # --- Main ---
 if __name__ == "__main__":
