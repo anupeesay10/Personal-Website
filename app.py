@@ -96,6 +96,47 @@ app.index_string = '''
                 display: block;
                 margin-bottom: 0.5rem;
             }}
+            .react-datepicker-wrapper input {{
+                background-color: var(--secondary-bg) !important;
+                color: var(--text-primary) !important;
+                border: 1px solid var(--border-color) !important;
+                border-radius: 6px !important;
+                padding: 0.5rem !important;
+            }}
+            .react-datepicker {{
+                background-color: var(--secondary-bg) !important;
+                border: 1px solid var(--border-color) !important;
+            }}
+            .react-datepicker__header {{
+                background-color: var(--tertiary-bg) !important;
+                border-bottom: 1px solid var(--border-color) !important;
+            }}
+            .react-datepicker__day {{
+                color: var(--text-primary) !important;
+            }}
+            .react-datepicker__day:hover {{
+                background-color: var(--accent) !important;
+            }}
+            .react-datepicker__day--selected {{
+                background-color: var(--accent) !important;
+            }}
+            .Select-control {{
+                background-color: var(--secondary-bg) !important;
+                border: 1px solid var(--border-color) !important;
+                border-radius: 6px !important;
+            }}
+            .Select-menu-outer {{
+                background-color: var(--secondary-bg) !important;
+                border: 1px solid var(--border-color) !important;
+            }}
+            .Select-option {{
+                color: var(--text-primary) !important;
+                background-color: var(--secondary-bg) !important;
+            }}
+            .Select-option:hover {{
+                background-color: var(--tertiary-bg) !important;
+                color: var(--accent) !important;
+            }}
         </style>
     </head>
     <body>
@@ -125,7 +166,7 @@ app.layout = html.Div([
     html.Div([
         html.Div([
             html.Label("Enter Stock Ticker:"),
-            dcc.Input(id='ticker-input', type='text', value=DEFAULT_TICKER, style={'width': '100%', 'padding': '8px'})
+            dcc.Input(id='ticker-input', type='text', value=DEFAULT_TICKER, style={'width': '100%'})
         ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
 
         html.Div([
@@ -138,20 +179,20 @@ app.layout = html.Div([
             dcc.DatePickerSingle(id='end-date-picker', date=DEFAULT_END_DATE, display_format='YYYY-MM-DD')
         ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
 
-        html.Button('Load Stock Data', id='submit-button', n_clicks=0, style={'margin-top': '20px'})
-    ], style={'margin-bottom': '20px', 'border': '1px solid #ddd', 'padding': '10px', 'border-radius': '5px'}),
+        html.Button('Load Stock Data', id='submit-button', n_clicks=0, style={'marginTop': '20px', 'width': '100%'})
+    ], style={'marginBottom': '20px', 'border': '1px solid var(--border-color)', 'padding': '20px', 'borderRadius': '12px'}),
 
-    html.Div(id='data-loaded-message', style={'margin': '10px 0', 'color': 'green'}),
+    html.Div(id='data-loaded-message', style={'margin': '10px 0', 'color': 'var(--accent-light)'}),
 
     html.Div([
         html.Label("Select Statistics:"),
-        dcc.Dropdown(id='stat-select', options=dropdown_options, value='Yearly Statistics')
-    ]),
+        dcc.Dropdown(id='stat-select', options=dropdown_options, value='Yearly Statistics', style={'width': '100%'})
+    ], style={'marginBottom': '20px'}),
 
     html.Div([
         html.Label("Select Year:"),
-        dcc.Dropdown(id='select-year', options=[{'label': i, 'value': i} for i in year_list], value=year_list[-1])
-    ]),
+        dcc.Dropdown(id='select-year', options=[{'label': i, 'value': i} for i in year_list], value=year_list[-1], style={'width': '100%'})
+    ], style={'marginBottom': '20px'}),
 
     html.Div(id='output-container', style={'padding': '20px'}),
 
