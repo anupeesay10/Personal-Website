@@ -161,7 +161,7 @@ app.layout = html.Div([
         dcc.Dropdown(id='select-year', options=[{'label': i, 'value': i} for i in year_list], value=year_list[-1], style={'width': '100%'})
     ], style={'marginBottom': '30px'}),
 
-    html.Div(id='output-container', style={'padding': '20px'}),
+    html.Div(id='output-container', style={'padding': '0px', 'overflow': 'hidden'}),
 
     dcc.Store(id='stock-data-store'),
     dcc.Store(id='years-available'),
@@ -272,13 +272,14 @@ def update_output(json_data, stat_type, year, ticker):
         )])
         fig1.update_layout(title=f'{stock_name} Candlestick ({start_year}-{end_year})',
                            yaxis_title='Price (in dollars)', xaxis_title='Date', xaxis_rangeslider_visible=True,
-                           width=1900, height=700)
+                           height=500, autosize=True)
 
         df2['Year'] = df2['date'].dt.year
         yearly_volume = df2.groupby('Year')['Volume'].mean().reset_index()
         fig2 = px.area(yearly_volume, x='Year', y='Volume',
                        title=f'Average {stock_name} Trading Volume Per Year ({start_year}-{end_year})',
-                       width=1900, height=700, markers=True)
+                       height=500, markers=True)
+        fig2.update_layout(autosize=True)
         fig2.update_layout(xaxis_title='Year')
 
         df2['daily_return'] = df2[price_col].pct_change() * 100
@@ -289,12 +290,12 @@ def update_output(json_data, stat_type, year, ticker):
                       color_discrete_map={'Positive': 'green', 'Negative': 'red'})
         fig3.update_layout(title=f'Average Daily Returns Per Year for {stock_name}',
                            yaxis_title='Percent Daily Return (%)', xaxis_title='Year',
-                           legend_title_text="Return Category", width=1900, height=700)
+                           legend_title_text="Return Category", height=500, autosize=True)
 
         df2['Cumulative Max'] = df2[price_col].cummax()
         df2['Drawdown'] = (df2[price_col] / df2['Cumulative Max'] - 1) * 100
         fig4 = px.area(df2, x='date', y='Drawdown', title=f'{stock_name} Drawdowns Over All Years')
-        fig4.update_layout(yaxis_title='Percent Drawdown (%)', xaxis_title='Date', width=1900, height=700)
+        fig4.update_layout(yaxis_title='Percent Drawdown (%)', xaxis_title='Date', height=500, autosize=True)
 
         return [dcc.Graph(figure=fig1), dcc.Graph(figure=fig2),
                 dcc.Graph(figure=fig3), dcc.Graph(figure=fig4)]
@@ -311,11 +312,11 @@ def update_output(json_data, stat_type, year, ticker):
         )])
         fig1.update_layout(title=f'{stock_name} Candlestick for {year}',
                            yaxis_title='Price (in dollars)', xaxis_title='Date', xaxis_rangeslider_visible=True,
-                           width=1900, height=700)
+                           height=500, autosize=True)
 
         fig2 = px.area(year_data, x='date', y='Volume', title=f'{stock_name} Daily Trading Volume for {year}',
-                       width=1900, height=700)
-        fig2.update_layout(xaxis_title='Date')
+                       height=500)
+        fig2.update_layout(xaxis_title='Date', autosize=True)
 
         year_data['daily_return'] = year_data[price_col].pct_change() * 100
         year_data['return_category'] = year_data['daily_return'].apply(lambda x: 'Positive' if x > 0 else 'Negative')
@@ -323,12 +324,12 @@ def update_output(json_data, stat_type, year, ticker):
                       color_discrete_map={'Positive': 'green', 'Negative': 'red'})
         fig3.update_layout(title=f"{stock_name} Average Daily Returns for {year}",
                            yaxis_title='Percent Daily Return (%)', xaxis_title='Date',
-                           legend_title_text="Return Category", width=1900, height=700)
+                           legend_title_text="Return Category", height=500, autosize=True)
 
         year_data['Cumulative Max'] = year_data[price_col].cummax()
         year_data['Drawdown'] = (year_data[price_col] / year_data['Cumulative Max'] - 1) * 100
         fig4 = px.area(year_data, x='date', y='Drawdown', title=f'{stock_name} Drawdowns for {year}')
-        fig4.update_layout(yaxis_title='Percent Drawdown (%)', xaxis_title='Date', width=1900, height=700)
+        fig4.update_layout(yaxis_title='Percent Drawdown (%)', xaxis_title='Date', height=500, autosize=True)
 
         return [dcc.Graph(figure=fig1), dcc.Graph(figure=fig2),
                 dcc.Graph(figure=fig3), dcc.Graph(figure=fig4)]
