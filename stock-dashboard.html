@@ -29,7 +29,7 @@
     <section class="project-hero">
         <div class="project-hero-content">
             <h1>Stock Dashboard</h1>
-            <p>Real-time stock data visualization and analysis</p>
+            <p>Real-time stock data visualization.</p>
         </div>
     </section>
 
@@ -38,11 +38,28 @@
         <div class="container">
             <div class="project-description">
                 <h2>Project Overview</h2>
-                <p>This is a dashboard that displays four charts given the user's input of a stock ticker of their choice:
-                    candlestick, trading volume, daily returns, and drawdowns.
 
-
+                 <p class="note">
+                <strong>Note:</strong> This application is hosted on Render’s free tier, so the initial load may take a moment
+                if the server is spinning up. Once loaded, performance should be noticeably faster on subsequent visits.
                 </p>
+                <p>This is a dashboard that displays four charts given a stock ticker of your choice:
+                    candlestick, trading volume, daily returns, and drawdowns.
+                    You can choose between "All Years Statistics", or "Yearly Statistics" for a specific year.
+                    This dashboard uses the Yahoo Finance (yfinance) library in python to fetch stock data, and PostgreSQL to store the data.
+                </p>
+                <p>The data logic is as follows:</p>
+                <ol>
+                    <li>A user enters a stock ticker symbol.</li>
+                    <li>If the data for that given stock is currently in the PostgreSQL database, it fetches the data from there.</li>
+                    <li>Otherwise, it makes an API call to Yahoo Finance to get the data.</li>
+                    <li>The data is then stored in the PostgreSQL database for future use.</li>
+                    <li>Finally, the data is displayed on the dashboard.</li>
+                </ol>
+                <p>Essentially, this mechanism ensures that the data is fetched only when necessary,
+                    reducing unnecessary API calls and improving performance.
+                </p>
+
                 <div class="project-ctas">
                     <a href="https://stock-dashboard-rxo2.onrender.com/" class="project-button">Launch Dashboard</a>
                     <a href="./work.html" class="project-button secondary">Back to Work</a>
