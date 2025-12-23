@@ -62,39 +62,57 @@ app.index_string = '''
             input, select, textarea {{
                 background-color: var(--secondary-bg);
                 color: var(--text-primary);
-                border: 1px solid var(--border-color);
-                border-radius: 6px;
-                padding: 0.5rem;
+                border: 1.5px solid var(--border-color);
+                border-radius: 8px;
+                padding: 0.75rem 1rem;
+                font-size: 1rem;
+                transition: all 0.3s ease;
+            }}
+            input::placeholder {{
+                color: var(--text-secondary);
             }}
             input:focus, select:focus, textarea:focus {{
                 outline: none;
                 border-color: var(--accent);
+                background-color: rgba(99, 102, 241, 0.05);
                 box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
             }}
             button {{
-                background-color: var(--accent);
+                background: linear-gradient(135deg, var(--accent), var(--accent-light));
                 color: white;
                 border: none;
-                border-radius: 6px;
-                padding: 0.5rem 1rem;
+                border-radius: 8px;
+                padding: 0.75rem 1.5rem;
                 font-weight: 600;
                 cursor: pointer;
                 transition: all 0.3s ease;
+                font-size: 1rem;
+                box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
             }}
             button:hover {{
-                background-color: var(--accent-light);
-                box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-                transform: translateY(-2px);
+                transform: translateY(-3px);
+                box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+            }}
+            button:active {{
+                transform: translateY(-1px);
             }}
             h1 {{
-                color: var(--text-primary);
-                margin-bottom: 2rem;
+                font-size: 3rem;
+                font-weight: 700;
+                margin-bottom: 2.5rem;
+                background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
             }}
             label {{
                 color: var(--text-secondary);
-                font-weight: 500;
+                font-weight: 600;
                 display: block;
-                margin-bottom: 0.5rem;
+                margin-bottom: 0.75rem;
+                font-size: 0.95rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
             }}
         </style>
     </head>
@@ -120,28 +138,28 @@ year_list = list(range(2010, current_year + 1))
 
 # --- Layout ---
 app.layout = html.Div([
-    html.H1("Stock Dashboard", style={'textAlign': 'center'}),
+    html.H1("Stock Dashboard"),
 
     html.Div([
         html.Div([
             html.Label("Enter Stock Ticker:"),
             dcc.Input(id='ticker-input', type='text', value=DEFAULT_TICKER, style={'width': '100%'})
-        ], style={'width': '100%', 'padding': '10px'}),
+        ], style={'width': '100%', 'marginBottom': '15px'}),
 
-        html.Button('Load Stock Data', id='submit-button', n_clicks=0, style={'width': '100%', 'marginTop': '10px'})
-    ], style={'marginBottom': '20px', 'border': '1px solid var(--border-color)', 'padding': '20px', 'borderRadius': '12px'}),
+        html.Button('Load Stock Data', id='submit-button', n_clicks=0, style={'width': '100%'})
+    ], style={'marginBottom': '30px', 'background': 'rgba(17, 22, 48, 0.5)', 'border': '1px solid var(--border-color)', 'padding': '30px', 'borderRadius': '16px', 'backdropFilter': 'blur(10px)'}),
 
-    html.Div(id='data-loaded-message', style={'margin': '10px 0', 'color': 'var(--accent-light)'}),
+    html.Div(id='data-loaded-message', style={'margin': '20px 0', 'color': 'var(--accent-light)', 'fontSize': '1rem', 'fontWeight': '600'}),
 
     html.Div([
         html.Label("Select Statistics:"),
-        dcc.Dropdown(id='stat-select', options=dropdown_options, value='Yearly Statistics')
-    ]),
+        dcc.Dropdown(id='stat-select', options=dropdown_options, value='Yearly Statistics', style={'width': '100%'})
+    ], style={'marginBottom': '25px'}),
 
     html.Div([
         html.Label("Select Year:"),
-        dcc.Dropdown(id='select-year', options=[{'label': i, 'value': i} for i in year_list], value=year_list[-1])
-    ]),
+        dcc.Dropdown(id='select-year', options=[{'label': i, 'value': i} for i in year_list], value=year_list[-1], style={'width': '100%'})
+    ], style={'marginBottom': '30px'}),
 
     html.Div(id='output-container', style={'padding': '20px'}),
 
