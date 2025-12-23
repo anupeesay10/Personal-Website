@@ -125,23 +125,13 @@ app.layout = html.Div([
     html.Div([
         html.Div([
             html.Label("Enter Stock Ticker:"),
-            dcc.Input(id='ticker-input', type='text', value=DEFAULT_TICKER, style={'width': '100%', 'padding': '8px'})
-        ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
+            dcc.Input(id='ticker-input', type='text', value=DEFAULT_TICKER, style={'width': '100%'})
+        ], style={'width': '100%', 'padding': '10px'}),
 
-        html.Div([
-            html.Label("Start Date:"),
-            dcc.DatePickerSingle(id='start-date-picker', date=DEFAULT_START_DATE, display_format='YYYY-MM-DD')
-        ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
+        html.Button('Load Stock Data', id='submit-button', n_clicks=0, style={'width': '100%', 'marginTop': '10px'})
+    ], style={'marginBottom': '20px', 'border': '1px solid var(--border-color)', 'padding': '20px', 'borderRadius': '12px'}),
 
-        html.Div([
-            html.Label("End Date:"),
-            dcc.DatePickerSingle(id='end-date-picker', date=DEFAULT_END_DATE, display_format='YYYY-MM-DD')
-        ], style={'width': '30%', 'display': 'inline-block', 'padding': '10px'}),
-
-        html.Button('Load Stock Data', id='submit-button', n_clicks=0, style={'margin-top': '20px'})
-    ], style={'margin-bottom': '20px', 'border': '1px solid #ddd', 'padding': '10px', 'border-radius': '5px'}),
-
-    html.Div(id='data-loaded-message', style={'margin': '10px 0', 'color': 'green'}),
+    html.Div(id='data-loaded-message', style={'margin': '10px 0', 'color': 'var(--accent-light)'}),
 
     html.Div([
         html.Label("Select Statistics:"),
@@ -171,11 +161,9 @@ app.layout = html.Div([
      Output('select-year', 'value')],
     [Input('submit-button', 'n_clicks'),
      Input('initialization-div', 'children')],
-    [State('ticker-input', 'value'),
-     State('start-date-picker', 'date'),
-     State('end-date-picker', 'date')]
+    [State('ticker-input', 'value')]
 )
-def load_stock_data(n_clicks, init_trigger, ticker, start_date, end_date):
+def load_stock_data(n_clicks, init_trigger, ticker):
     import dash
     ctx = dash.callback_context
     trigger_id = ctx.triggered[0]['prop_id'].split('.')[0] if ctx.triggered else None
@@ -197,11 +185,8 @@ def load_stock_data(n_clicks, init_trigger, ticker, start_date, end_date):
     if not ticker:
         return None, "Please enter a valid ticker symbol", None, [], None
 
-    if not start_date or not end_date:
-        return None, "Please select both start and end dates", None, [], None
-
     try:
-        payload = {"ticker": ticker.upper(), "start_date": start_date, "end_date": end_date}
+        payload = {"ticker": ticker.upper(), "start_date": DEFAULT_START_DATE, "end_date": DEFAULT_END_DATE}
         response = requests.post(f"{API_URL}/stock/load", json=payload, timeout=10)
         try:
             result = response.json()
