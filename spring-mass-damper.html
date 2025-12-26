@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spring Mass Damper - Anirudh Peesay</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">Anirudh Peesay</div>
+            <div class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="./index.html" class="nav-link">Home</a></li>
+                <li><a href="./index.html#about" class="nav-link">About</a></li>
+                <li><a href="./work.html" class="nav-link">Work</a></li>
+                <li><a href="./contact.html" class="nav-link">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Project Hero Section -->
+    <section class="project-hero">
+        <div class="project-hero-content">
+            <h1>Spring Mass Damper</h1>
+            <p>Computational modeling and simulation of dynamic systems</p>
+        </div>
+    </section>
+
+    <!-- Project Details Section -->
+    <section class="project-details">
+        <div class="container">
+            <div class="project-description">
+                <h2>Project Overview</h2>
+
+                <p>This project implements a computational model of a spring-mass-damper system, a fundamental system in mechanical engineering and physics used to understand oscillatory behavior and damped motion.
+                </p>
+                <p>The system models the dynamics of a human being falling from a certain initial height and landing on the ground. This system is modeled using the spring-mass-damper system's second order ODE:
+                </p>
+                <p>$$m \frac{d^2y}{dt^2} = -k \Delta y - c \frac{dy}{dt} - mg$$</p>
+                <p>We use the spring-mass-damper ODE to simulate three phenomena that occur in our scenario:</p>
+                <ol>
+                    <li>The ground as a damping force, "stopping" the person from falling further, denoted by the term $$-c\frac{dy}{dt}$$</li>
+                    <li>The person re-positioning themself to a standing position after landing as a spring force, "springing" themself back up, denoted by the term $$-k \Delta y$$</li>
+                    <li>The person falling downward due to the force of gravity, denoted by the term, $$-mg$$</li>
+                </ol>
+
+                <p> Where the sum of these forces equals the mass of the person times their acceleration.
+                    We denote the force of gravity as being negative since it acts downwards, the spring force as negative as it acts opposite of the direction in which the person compresses when they land, and the damping force as negative because it acts opposite of the direction of their velocity when they land.
+                </p>
+                <p>
+                    Note that when the person is falling downward and still in the air, the only force that is present is the force of gravity and the spring and damping forces are both zero.
+                    Upon landing, both the spring and damping forces come into play.
+                    This is an example of contact non-linearity, which is common in Impact mechanics, Robotics (foot–ground contact), Vehicle suspension models, and Biomechanics.
+                </p>
+
+
+
+
+                <div class="project-ctas">
+                    <a href="./work.html" class="project-button secondary">Back to Work</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Anirudh Peesay. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script type="module" src="./main.js"></script>
+</body>
+</html>
