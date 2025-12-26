@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Spring Mass Damper - Anirudh Peesay</title>
+    <title>Spring Mass Damper - Anu Peesay Peesay</title>
     <link rel="stylesheet" href="./style.css" />
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -12,7 +12,7 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="nav-logo">Anirudh Peesay</div>
+            <div class="nav-logo">Anu Peesay</div>
             <div class="nav-toggle" id="navToggle">
                 <span></span>
                 <span></span>
@@ -59,9 +59,39 @@
                 <p>
                     Note that when the person is falling downward and still in the air, the only force that is present is the force of gravity and the spring and damping forces are both zero.
                     Upon landing, both the spring and damping forces come into play.
-                    This is an example of contact non-linearity, which is common in Impact mechanics, Robotics (foot–ground contact), Vehicle suspension models, and Biomechanics.
+                    This is an example of <b>contact non-linearity</b>, which is common in Impact mechanics, Robotics (foot–ground contact), Vehicle suspension models, and Biomechanics.
                 </p>
+                <p>
+                    The code iterates through each time step and uses Euler's method to calculate the Ground Reaction Force (GRF), the total mechanical energy, and the total dissipated energy.
+                    For Euler's method to make sense, we must convert our ODE to a first-order ODE:
+                    \[ \dot{y} = v \]
+                    \[ \dot{v} = \frac{1}{m}\left(-mg + F_{\text{spring}} + F_{\text{damp}}\right) \]
 
+                    Our Ground Reaction Force (GRF) is simply the sum of the spring and the damping forces: $$F_{\text{GRF}} = F_{\text{spring}} + F_{\text{damp}}$$
+
+                    We assume that acceleration for a single moment each time step, and calculate it as follows:
+                    $$a = \frac{F_{\text{spring}} + F_{\text{damp}} + F_{\text{gravity}}}{m}$$
+
+                    We then calculate the new velocity and position based off of this acceleration:
+                   $$ v_{n+1} = v_n + a\,\Delta t $$
+                    $$ y_{n+1} = y_n + v_{n+1}\,\Delta t $$
+
+                    The new velocity and position values are used to calculate the Kinetic, Gravitational Potential, and Spring Elastic Potential energies, where the total mechanical energy is the sum of all three.
+                    The new velocity value is also used to calculate the amount of energy dissipated from the damping force.
+                    To further clarify, the total energy is dissipated through the ground upon landing, which is why our damping force is the only force used to calculate our dissipated energy.
+                    Here is the derivation of our dissipated energy:
+                    $$F_{\text{damp}} = -cv$$
+                    $$dW_{\text{damp}} = (-cv)dy $$
+                    $$dW_{\text{damp}} = -cv * vdt = -cv^2 dt$$ where the velocity is the derivative of the person's position y with respect to time.
+                    $$dE_{\text{dissipated}} = -dW_{\text{damp}} = cv^2 dt$$ where the negative sign denotes the energy leaving the system.
+
+                    The dissipated energy is accumulated over each time step.
+                    The total energy is calculated at each time step as the sum of the mechanical and accumulated dissipated energies.
+
+
+                </p>
+                <p>This recursion continues until we reach the total simulation time.
+                    We store the GRF values for each time step and the energy values for each time step to result in two charts: GRF over time and Energy over time</p>
 
 
 
@@ -75,7 +105,7 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 Anirudh Peesay. All rights reserved.</p>
+            <p>&copy; 2025 Anu Peesay. All rights reserved.</p>
         </div>
     </footer>
 
