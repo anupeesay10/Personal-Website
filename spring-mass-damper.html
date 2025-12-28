@@ -55,6 +55,13 @@
 
                 <p> Where the sum of these forces equals the mass of the person times their acceleration.
                     We denote the force of gravity as being negative since it acts downwards, the spring force as negative as it acts opposite of the direction in which the person compresses when they land, and the damping force as negative because it acts opposite of the direction of their velocity when they land.
+                    The program has fixed k and c values for each terrain type:
+                <ol>
+                    <li>Rocky: k = 80000 and c = 2000</li>
+                    <li>Grassy: k = 30000 and c = 1200</li>
+                    <li>Muddy k = 8000 c = 3500</li>
+                </ol>
+
                 </p>
                 <p>
                     Note that when the person is falling downward and still in the air, the only force that is present is the force of gravity and the spring and damping forces are both zero.
@@ -91,7 +98,7 @@
 
                 </p>
                 <p>This recursion continues until we reach the total simulation time.
-                    We store the GRF values for each time step and the energy values for each time step to result in two charts: GRF over time and Energy over time</p>
+                    We store the GRF values for each time step and the energy values for each time step to result in two charts: GRF over time and Energy over time.</p>
 
 
 
