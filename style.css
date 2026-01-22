@@ -399,7 +399,7 @@ section {
 
 .categories-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-template-columns: 1fr;
     gap: 3rem;
 }
 
@@ -452,8 +452,8 @@ section {
 }
 
 .category-content {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 2rem;
 }
 
