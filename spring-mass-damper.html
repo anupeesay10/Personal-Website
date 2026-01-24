@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vertical Drop - Anu Peesay Peesay</title>
-    <link rel="stylesheet" href="./style.css" />
+    <title>Vertical Drop - Anu Peesay</title>
+    <link rel="stylesheet" href="/style.css" />
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
@@ -19,10 +19,10 @@
                 <span></span>
             </div>
             <ul class="nav-menu" id="navMenu">
-                <li><a href="./index.html" class="nav-link">Home</a></li>
-                <li><a href="./index.html#about" class="nav-link">About</a></li>
-                <li><a href="./work.html" class="nav-link">Work</a></li>
-                <li><a href="./contact.html" class="nav-link">Contact</a></li>
+                <li><a href="/index.html" class="nav-link">Home</a></li>
+                <li><a href="/index.html#about" class="nav-link">About</a></li>
+                <li><a href="/work.html" class="nav-link">Work</a></li>
+                <li><a href="/contact.html" class="nav-link">Contact</a></li>
             </ul>
         </div>
     </nav>
@@ -59,7 +59,7 @@
                 <ol>
                     <li>Rocky: k = 80000 and c = 2000</li>
                     <li>Grassy: k = 30000 and c = 1200</li>
-                    <li>Muddy k = 8000 c = 3500</li>
+                    <li>Muddy: k = 8000, c = 3500</li>
                 </ol>
 
                 </p>
@@ -80,7 +80,7 @@
                     $$a = \frac{F_{\text{spring}} + F_{\text{damp}} + F_{\text{gravity}}}{m}$$
 
                     We then calculate the new velocity and position based off of this acceleration:
-                   $$ v_{n+1} = v_n + a\,\Delta t $$
+                    $$ v_{n+1} = v_n + a\,\Delta t $$
                     $$ y_{n+1} = y_n + v_{n+1}\,\Delta t $$
 
                     The new velocity and position values are used to calculate the Kinetic, Gravitational Potential, and Spring Elastic Potential energies, where the total mechanical energy is the sum of all three.
@@ -94,8 +94,6 @@
 
                     The dissipated energy is accumulated over each time step.
                     The total energy is calculated at each time step as the sum of the mechanical and accumulated dissipated energies.
-
-
                 </p>
                 <p>This recursion continues until we reach the total simulation time.
                     We store the GRF values for each time step and the energy values for each time step to result in two charts: GRF over time and Energy over time.</p>
@@ -105,11 +103,9 @@
                     In particular, I want to see if the Energy vs Time Graph would be eliminated of its little humps, which are currently caused by the use of Euler's Method.
                 </p>
 
-
-
                 <div class="project-ctas">
                     <a href="https://spring-mass-damper.streamlit.app/" class="project-button">Launch App</a>
-                    <a href="./work.html" class="project-button secondary">Back to Work</a>
+                    <a href="/work.html" class="project-button secondary">Back to Work</a>
                 </div>
             </div>
         </div>
@@ -122,6 +118,6 @@
         </div>
     </footer>
 
-    <script type="module" src="./main.js"></script>
+    <script type="module" src="/main.js"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Stock Dashboard - Anu Peesay</title>
-    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
     <!-- Navigation -->
@@ -17,10 +17,10 @@
                 <span></span>
             </div>
             <ul class="nav-menu" id="navMenu">
-                <li><a href="./index.html" class="nav-link">Home</a></li>
-                <li><a href="./index.html#about" class="nav-link">About</a></li>
-                <li><a href="./work.html" class="nav-link">Work</a></li>
-                <li><a href="./contact.html" class="nav-link">Contact</a></li>
+                <li><a href="/index.html" class="nav-link">Home</a></li>
+                <li><a href="/index.html#about" class="nav-link">About</a></li>
+                <li><a href="/work.html" class="nav-link">Work</a></li>
+                <li><a href="/contact.html" class="nav-link">Contact</a></li>
             </ul>
         </div>
     </nav>
@@ -39,15 +39,17 @@
             <div class="project-description">
                 <h2>Project Overview</h2>
 
-                 <p class="note">
-                <strong>Note:</strong> This application is hosted on Render’s free tier, so the initial load may take a moment
-                if the server is spinning up. Once loaded, performance should be noticeably faster on subsequent visits.
+                <p class="note">
+                    <strong>Note:</strong> This application is hosted on Render’s free tier, so the initial load may take a moment
+                    if the server is spinning up. Once loaded, performance should be noticeably faster on subsequent visits.
                 </p>
+
                 <p>This is a dashboard that displays four charts given a stock ticker of your choice:
                     candlestick, trading volume, daily returns, and drawdowns.
                     You can choose between "All Years Statistics", or "Yearly Statistics" for a specific year.
-                    This dashboard uses the Yahoo Finance (yfinance) library in python to fetch stock data, and PostgreSQL to store the data.
+                    This dashboard uses the Yahoo Finance (yfinance) library in Python to fetch stock data, and PostgreSQL to store the data.
                 </p>
+
                 <p>The data logic is as follows:</p>
                 <ol>
                     <li>A user enters a stock ticker symbol.</li>
@@ -56,13 +58,14 @@
                     <li>The data is then stored in the PostgreSQL database for future use.</li>
                     <li>Finally, the data is displayed on the dashboard.</li>
                 </ol>
+
                 <p>Essentially, this mechanism ensures that the data is fetched only when necessary,
                     reducing unnecessary API calls and improving performance.
                 </p>
 
                 <div class="project-ctas">
                     <a href="https://stock-dashboard-rxo2.onrender.com/" class="project-button">Launch Dashboard</a>
-                    <a href="./work.html" class="project-button secondary">Back to Work</a>
+                    <a href="/work.html" class="project-button secondary">Back to Work</a>
                 </div>
             </div>
         </div>
@@ -75,6 +78,6 @@
         </div>
     </footer>
 
-    <script type="module" src="./main.js"></script>
+    <script type="module" src="/main.js"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bernoulli Wing - Anu Peesay</title>
-    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="/style.css" />
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
@@ -19,10 +19,10 @@
                 <span></span>
             </div>
             <ul class="nav-menu" id="navMenu">
-                <li><a href="./index.html" class="nav-link">Home</a></li>
-                <li><a href="./index.html#about" class="nav-link">About</a></li>
-                <li><a href="./work.html" class="nav-link">Work</a></li>
-                <li><a href="./contact.html" class="nav-link">Contact</a></li>
+                <li><a href="/index.html" class="nav-link">Home</a></li>
+                <li><a href="/index.html#about" class="nav-link">About</a></li>
+                <li><a href="/work.html" class="nav-link">Work</a></li>
+                <li><a href="/contact.html" class="nav-link">Contact</a></li>
             </ul>
         </div>
     </nav>
@@ -41,45 +41,21 @@
             <div class="project-description">
                 <h2>Project Overview</h2>
 
-                <p>This project explores the aerodynamic principles governing flight through computational analysis of wing lift using Bernoulli's equation.
-                </p>
-                <p>The fundamental principle behind lift generation is Bernoulli's equation, which relates pressure, velocity, and height in a flowing fluid:
-                </p>
-                <p>$$P + \frac{1}{2}\rho v^2 + \rho g h = \text{constant}$$ where the height differences of two given points in a given streamline are small compared to velocity and pressure effects, so the difference in <i>pgh</i> between points is negligible.
-                    For this project, we take a reference point far upstream of the airfoil, where the air is nearly at rest and the height differences are negligible.
-                    The pressure at this point is defined as P_0.
-                    The code therefore uses the following equation to evaluate Pressure for a given freestream velocity, <i>v</i>:
-                    $$P = P_0 - \frac{1}{2}\rho v^2$$ </p>
-                <p>With Bernoulli's Principle stating that <strong> for horizontal flow, an increase in velocity must be accompanied by a decrease in pressure.</strong>
-                    The app allows the user to select from three different parameters: Freestream velocity (m/s), Airfoil camber, and Angle of attack (deg), which are each given in a realistic range.
-                    The freestream velocity is the velocity at which air flows over the wing, the airfoil camber is the curvature of the wing, and the angle of attack is the angle in which the wing is tilted relative to the airflow.
-                    In addition to these three parameters, the app also allows the user's input on either a small, medium or large plane which correspond to a Lift required for takeoff.
-                    Small Plane is set to 1500 N/m, Medium Plane is set to 3000 N/m, and Large Plane is set to 5000 N/m.
-                </p>
+                <p>This project explores the aerodynamic principles governing flight through computational analysis of wing lift using Bernoulli's equation.</p>
 
-                <p>
-                    <b>Pressure Distribution vs Airflow: </b>
-                    The horizontal component of the freestream velocity for both the top and the bottom of the wing is scaled by a factor, 1+influence and 1-influence for the top and the bottom, respectively.
-                    The variable "influence" is created using a Gaussian curve, which models how the airflow nearest to the surface of the airfoil is most affected, and is less affected as you move away from the surface.
-                    The scaling factor is 1 + influence for the top to model the velocity being higher at the top, and 1 - influence for the bottom to model the velocity being lower at the bottom.
-                    We then use Bernoulli's equation to compute the Pressures for the top and the bottom using each of these velocities.
-                </p>
-                <p>
-                    <b>Lift vs Airspeed: </b>
-                    The top and bottom Pressures are calculated for each possible airspeed in a set range of values.
-                    Taking the difference between the top and bottom pressures and integrating over the length of the chord gives the Lift.
-                    Therefore, we can plot Lift for each of our possible airspeeds.
-                    It is important to note that the lift at each airspeed is recalculated upon changing the parameters.
-                    Since the Lift curve changes upon changing the parameters, we reach the conclusion that the takeoff velocity can be reduced for a given small, medium, or large plane, and therefore be reached sooner given that the acceleration of the planes prior to takeoff remains the same.
-                    Notice that adjusting the freestream velocity does not affect this graph at all.
-                    Realistically, we do not want to drastically increase the acceleration of a plane to reach a higher freestream velocity sooner, as accelerating too fast could negatively affect passengers on board.
-                    This project shows that takeoff speed can be reduced by modifying airfoil camber and angle of attack to increase lift coefficient, shifting the lift–airspeed curve upward.
-                    In the future, I would like to see how other factors such as different materials of the wings or different temperatures of the surrounding air could reduce takeoff velocity.
-                </p>
+                <p>The fundamental principle behind lift generation is Bernoulli's equation, which relates pressure, velocity, and height in a flowing fluid:</p>
+                <p>$$P + \frac{1}{2}\rho v^2 + \rho g h = \text{constant}$$ where the height differences of two given points in a given streamline are small compared to velocity and pressure effects, so the difference in <i>pgh</i> between points is negligible. For this project, we take a reference point far upstream of the airfoil, where the air is nearly at rest and the height differences are negligible. The pressure at this point is defined as P_0. The code therefore uses the following equation to evaluate Pressure for a given freestream velocity, <i>v</i>:</p>
+                <p>$$P = P_0 - \frac{1}{2}\rho v^2$$</p>
+
+                <p>With Bernoulli's Principle stating that <strong>for horizontal flow, an increase in velocity must be accompanied by a decrease in pressure.</strong> The app allows the user to select from three parameters: Freestream velocity (m/s), Airfoil camber, and Angle of attack (deg), all given in a realistic range. The freestream velocity is the velocity at which air flows over the wing, the airfoil camber is the curvature of the wing, and the angle of attack is the angle in which the wing is tilted relative to the airflow. Users can also select a small, medium, or large plane corresponding to lift required for takeoff: Small = 1500 N/m, Medium = 3000 N/m, Large = 5000 N/m.</p>
+
+                <p><b>Pressure Distribution vs Airflow:</b> The horizontal component of the freestream velocity for the top and bottom of the wing is scaled by 1+influence and 1-influence, respectively. "Influence" is modeled using a Gaussian curve, which decreases with distance from the wing surface. Bernoulli's equation is then used to compute pressures.</p>
+
+                <p><b>Lift vs Airspeed:</b> The top and bottom pressures are calculated for each airspeed. The difference integrated over the chord length gives lift. The lift curve updates dynamically with parameter changes. This allows takeoff speed to be reduced by adjusting airfoil camber and angle of attack, without drastically increasing acceleration.</p>
 
                 <div class="project-ctas">
                     <a href="https://bernoulli-wing.streamlit.app/" class="project-button">Launch Project</a>
-                    <a href="./work.html" class="project-button secondary">Back to Work</a>
+                    <a href="/work.html" class="project-button secondary">Back to Work</a>
                 </div>
             </div>
         </div>
@@ -92,6 +68,7 @@
         </div>
     </footer>
 
-    <script type="module" src="./main.js"></script>
+    <script type="module" src="/main.js"></script>
 </body>
 </html>
+
