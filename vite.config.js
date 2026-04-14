@@ -12,6 +12,7 @@ export default defineConfig({
         'spring-mass-damper': resolve(__dirname, 'spring-mass-damper.html'),
         'bernoulli-wing': resolve(__dirname, 'bernoulli-wing.html'),
         'stock-dashboard': resolve(__dirname, 'stock-dashboard.html'),
+        'amazon-delivery': resolve(__dirname, 'amazon-delivery.html'),
       },
     },
   },
