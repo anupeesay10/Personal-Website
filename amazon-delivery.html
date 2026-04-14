@@ -29,7 +29,7 @@
     <section class="project-hero">
         <div class="project-hero-content">
             <h1>Amazon Delivery Routes</h1>
-            <p>Optimization of delivery routes for Amazon logistics.</p>
+            <p>Evaluation and assessment of different delivery strategies for Amazon logistics.</p>
         </div>
     </section>
 
@@ -39,13 +39,21 @@
             <div class="project-description">
                 <h2>Project Overview</h2>
                 <p>
-                    This project focuses on optimizing delivery routes to improve efficiency and reduce operational costs in logistics. 
-                    The analysis includes route planning, scheduling, and resource allocation to ensure timely deliveries.
+                    This is a simple project that evaluates the performance of two routing strategies across three different scenarios of delivery locations.
+
                 </p>
                 
                 <p>
-                    [Write-up content to be added here]
+                    Two of the most obvious routing strategies one can take in delivering is a "Greedy" algorithm where the driver goes to the nearest delivery location from their current
+                    location, and the "Random" algorithm where the driver would go to a random delivery location out of all of the remaining locations they would have to travel to.
+                    To test the performance of these two algorithms, I created three delivery scenarios in which a driver would deliver to. Scenario 1 is an evenly distributed set of points.
+                    Scenario 2 is a set of points that are "clustered", or close together. Scenario 3 is two sets of clustered points separated over a distance. All scenarios contain the same
+                    number of points, and all scenarios start at the Depot, point (0,0). The simulation can be run to evaluate the total distance spent and the total time spent for each routing strategy.
                 </p>
+
+                </p>
+
+
 
                 <div class="project-ctas">
                     <a href="https://amazondelivery.streamlit.app/" class="project-button" target="_blank">Launch App</a>
